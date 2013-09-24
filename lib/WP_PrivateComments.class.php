@@ -27,6 +27,6 @@
 
 
 		private function __construct(){
-			
-		}
+
+		} 
 	}

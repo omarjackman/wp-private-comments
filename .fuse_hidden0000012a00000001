@@ -1,0 +1,4 @@
+<?php
+	require_once('lib/WP_PrivateComments.class.php');
+
+	WP_PrivateComments::getInstance();
