@@ -1,10 +1,4 @@
 <?php
-
-	define('PRIVATE_COMMENT_VISIBILITY_FIELD_PREFIX', 'wp-private-comment-');
-	define('PRIVATE_COMMENT_VISIBILITY_EVERYONE', '');
-	define('PRIVATE_COMMENT_VISIBILITY_POST_AUTHOR', 1);
-	define('PRIVATE_COMMENT_VISIBILITY_COMMENT_AUTHOR', 2);
-
 	/**
 	 * 
 	 * @package default
@@ -13,6 +7,10 @@
 
 		protected static $_instance;
 
+		const FIELD_PREFIX = 'wp-private-comment-';
+		const VISIBILITY_EVERYONE = '';
+		const VISIBILITY_POST_AUTHOR = 1;
+		const VISIBILITY_COMMENT_AUTHOR = 2;
 
 		protected function __clone() {}
 
@@ -43,9 +41,9 @@
 		 */
 		function getVisibilityValues(){
 			return apply_filters('WP_PrivateComments::getVisibilityValues', array(
-				'Everyone' => PRIVATE_COMMENT_VISIBILITY_EVERYONE,
-				'Post author' => PRIVATE_COMMENT_VISIBILITY_POST_AUTHOR,
-				'Comment author' => PRIVATE_COMMENT_VISIBILITY_COMMENT_AUTHOR,
+				'Everyone' => self::VISIBILITY_EVERYONE,
+				'Post author' => self::VISIBILITY_POST_AUTHOR,
+				'Comment author' => self::VISIBILITY_COMMENT_AUTHOR,
 			));
 		}
 
@@ -100,7 +98,7 @@
 			$field_names = array_keys($this->getFields());
 
 			foreach($field_names as $field_name){
-				add_comment_meta( $comment_id, PRIVATE_COMMENT_VISIBILITY_FIELD_PREFIX . $field_name, $_POST[$field_name] );
+				add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $_POST[$field_name] );
 			}
 		}
 	}
