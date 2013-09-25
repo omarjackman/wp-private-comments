@@ -1,5 +1,10 @@
 <?php
 
+	define('PRIVATE_COMMENT_VISIBILITY_FIELD_PREFIX', 'wp-private-comment-');
+	define('PRIVATE_COMMENT_VISIBILITY_EVERYONE', '');
+	define('PRIVATE_COMMENT_VISIBILITY_POST_AUTHOR', 1);
+	define('PRIVATE_COMMENT_VISIBILITY_COMMENT_AUTHOR', 2);
+
 	/**
 	 * 
 	 * @package default
@@ -32,14 +37,34 @@
 			add_filter( 'comment_form_logged_in', array($this, 'comment_form_logged_in') );
 		}
 
+		/**
+		 * Get posible values for the visibility field
+		 * @return array
+		 */
+		function getVisibilityValues(){
+			return apply_filters('WP_PrivateComments::getVisibilityValues', array(
+				'Everyone' => PRIVATE_COMMENT_VISIBILITY_EVERYONE,
+				'Post author' => PRIVATE_COMMENT_VISIBILITY_POST_AUTHOR,
+				'Comment author' => PRIVATE_COMMENT_VISIBILITY_COMMENT_AUTHOR,
+			));
+		}
+
 
 		/**
 		 * Get the fields that will be placed on a comment form
 		 * @return array
 		 */
 		function getFields(){
+			
+			$visibility_values = $this->getVisibilityValues();
+
+			$options = '';
+			foreach($visibility_values as $visibility_value_title => $visibility_value){
+				$options .= '<option value="' . esc_html($visibility_value) . '">' . esc_html__($visibility_value_title);
+			}
+
 			return apply_filters('WP_PrivateComments::getFields', array(
-				'visibility' => '<p class="comment-form-visibility"><label for="visibility">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/></select>'
+				'visibility' => '<p class="comment-form-visibility"><label for="visibility">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>'
 			));
 		}
 
@@ -72,9 +97,10 @@
 		 * @param int $comment_id 
 		 */
 		function comment_post( $comment_id ) {
-			$fields_names = array_keys($this->getFields());
+			$field_names = array_keys($this->getFields());
+
 			foreach($field_names as $field_name){
-				add_comment_meta( $comment_id, $field_name, $_POST[$field_name] );
+				add_comment_meta( $comment_id, PRIVATE_COMMENT_VISIBILITY_FIELD_PREFIX . $field_name, $_POST[$field_name] );
 			}
 		}
 	}
