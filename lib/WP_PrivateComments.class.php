@@ -31,13 +31,38 @@
 
 
 		protected function __construct(){
-			add_action( 'comment_post', array($this, 'comment_post') );
+			add_action( 'comment_post', array($this, 'save_visibility_fields') );
+			add_action( 'edit_comment', array($this, 'save_visibility_fields') );
+			 
 			add_filter( 'comment_form_default_fields', array($this, 'comment_form_default_fields') );
 			add_filter( 'comment_form_logged_in', array($this, 'comment_form_logged_in') );
 			add_filter( 'comments_array', array($this, 'comments_array'), 10, 2 );
 			add_filter( 'get_comments_number', array($this, 'get_comments_number'), 10, 2 );
 			
+			add_action( 'add_meta_boxes', array($this, 'add_meta_boxes') );
+
 			//TODO: Add filter that will remove hidden comments from feeds
+		}
+
+		/**
+		 * Add our meta box to the comments page
+		 */
+		function add_meta_boxes(){
+			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array($this, 'meta_box'), 'comment', 'normal');
+		}
+
+		/**
+		 * Display our fields in the meta box
+		 * @param object $comment 
+		 */
+		function meta_box( $comment){
+			$fields = $this->getFields($comment->comment_ID);
+
+			foreach ( $fields as $field ) {
+				echo $field;
+			}
+
+			wp_nonce_field('wp-private-comments-savedata', self::FIELD_PREFIX . 'NONCE');
 		}
 
 		/**
@@ -52,23 +77,29 @@
 			));
 		}
 
-
 		/**
 		 * Get the fields that will be placed on a comment form
 		 * @return array
 		 */
-		function getFields(){
+		function getFields($comment_id = null){
 			
 			$visibility_values = $this->getVisibilityValues();
 
+			$selected_visibility_value = ($comment_id) ? get_comment_meta($comment_id , self::FIELD_PREFIX . 'visibility', true) : null;
+
 			$options = '';
 			foreach($visibility_values as $visibility_value_title => $visibility_value){
-				$options .= '<option value="' . esc_html($visibility_value) . '">' . esc_html__($visibility_value_title);
+				if($selected_visibility_value == $visibility_value){
+					$options .= '<option value="' . esc_html($visibility_value) . '" selected>' . esc_html__($visibility_value_title);
+				}
+				else{
+					$options .= '<option value="' . esc_html($visibility_value) . '">' . esc_html__($visibility_value_title);
+				}
 			}
 
 			return apply_filters('WP_PrivateComments::getFields', array(
 				'visibility' => '<p class="comment-form-visibility"><label for="visibility">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>'
-			));
+			), $comment_id);
 		}
 
 		/**
@@ -175,6 +206,8 @@
 				$logged_in_as .= apply_filters( "comment_form_field_{$name}", $field ) . "\n";
 			}
 
+			$logged_in_as .= wp_nonce_field('wp-private-comments-savedata', self::FIELD_PREFIX . 'NONCE', true, false);
+
 			return $logged_in_as;
 		}
 
@@ -191,10 +224,16 @@
 		 * Save the fields that were added to the comment form as meta data for later use
 		 * @param int $comment_id 
 		 */
-		function comment_post( $comment_id ) {
+		function save_visibility_fields( $comment_id ) {
+
+			if(!wp_verify_nonce($_POST[self::FIELD_PREFIX . 'NONCE'], 'wp-private-comments-savedata')){
+				return;
+			}
+
 			$field_names = array_keys($this->getFields());
 
 			foreach($field_names as $field_name){
+				delete_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name );
 				if(isset($_POST[$field_name]) && !empty($_POST[$field_name])){
 					add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $_POST[$field_name] );
 				}
