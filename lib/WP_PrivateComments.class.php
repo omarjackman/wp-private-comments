@@ -71,6 +71,12 @@
 			));
 		}
 
+		/**
+		 * Get the adjusted comment count for a post
+		 * @param int $count 
+		 * @param int $post_id 
+		 * @return int
+		 */
 		function get_comments_number($count, $post_id){
 			if(isset($this->_comment_counts[$post_id]))
 				return $this->_comment_counts[$post_id];
