@@ -269,6 +269,7 @@
 		 */
 		function save_visibility_fields( $comment_id ) {
 
+			// a nonce value is always required so verify it here
 			if(!$this->verify_nonce()){
 				return;
 			}
