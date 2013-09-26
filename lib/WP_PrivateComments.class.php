@@ -121,7 +121,7 @@
 		 * @param object $comment 
 		 */
 		function meta_box( $comment){
-			$fields = $this->getFields($comment->comment_ID);
+			$fields = $this->get_fields($comment->comment_ID);
 
 			foreach ( $fields as $field ) {
 				echo $field;
@@ -134,8 +134,8 @@
 		 * Get posible values for the visibility field
 		 * @return array
 		 */
-		function getVisibilityValues(){
-			return apply_filters('WP_PrivateComments::getVisibilityValues', array(
+		function get_visibility_values(){
+			return apply_filters('WP_PrivateComments::get_visibility_values', array(
 				'Everyone' => self::VISIBILITY_EVERYONE,
 				'Post author' => self::VISIBILITY_POST_AUTHOR,
 				'Comment author' => self::VISIBILITY_COMMENT_AUTHOR,
@@ -146,9 +146,9 @@
 		 * Get the fields that will be placed on a comment form
 		 * @return array
 		 */
-		function getFields($comment_id = null){
+		function get_fields($comment_id = null){
 			
-			$visibility_values = $this->getVisibilityValues();
+			$visibility_values = $this->get_visibility_values();
 
 			$selected_visibility_value = ($comment_id) ? get_comment_meta($comment_id , self::FIELD_PREFIX . 'visibility', true) : null;
 
@@ -162,7 +162,7 @@
 				}
 			}
 
-			return apply_filters('WP_PrivateComments::getFields', array(
+			return apply_filters('WP_PrivateComments::get_fields', array(
 				'visibility' => '<p class="comment-form-visibility"><label for="visibility">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>'
 			), $comment_id);
 		}
@@ -304,7 +304,7 @@
 		 * @return string
 		 */
 		function comment_form_logged_in($logged_in_as) {
-			$fields = $this->getFields();
+			$fields = $this->get_fields();
 
 			foreach ( $fields as $name => $field ) {
 				$logged_in_as .= apply_filters( "comment_form_field_{$name}", $field ) . "\n";
@@ -321,7 +321,7 @@
 		 * @return array
 		 */
 		function comment_form_default_fields( $fields ){
-			return array_merge($fields, $this->getFields());
+			return array_merge($fields, $this->get_fields());
 		}
 
 		/**
@@ -335,7 +335,7 @@
 				return;
 			}
 
-			$field_names = array_keys($this->getFields());
+			$field_names = array_keys($this->get_fields());
 
 			foreach($field_names as $field_name){
 				// Delete the meta data since you don't want blank values
