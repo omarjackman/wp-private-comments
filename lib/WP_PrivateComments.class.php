@@ -8,6 +8,7 @@
 		protected static $_instance;
 		protected $_comment_counts = array();
 
+
 		const FIELD_PREFIX = 'wp-private-comment-';
 		const VISIBILITY_EVERYONE = '';
 		const VISIBILITY_POST_AUTHOR = 1;
@@ -29,16 +30,24 @@
 			}
 		}
 
-
+		/**
+		 * Initialize the WP_PrivateComments object by binding necessary actions and filters
+		 */
 		protected function __construct(){
+
+			// Bind actions that will server for saving the visibility preferences
 			add_action( 'comment_post', array($this, 'save_visibility_fields') );
 			add_action( 'edit_comment', array($this, 'save_visibility_fields') );
 			 
+			// Bind filters that will server for loading the visibility fields into the necessary forms
 			add_filter( 'comment_form_default_fields', array($this, 'comment_form_default_fields') );
 			add_filter( 'comment_form_logged_in', array($this, 'comment_form_logged_in') );
 			add_filter( 'comments_array', array($this, 'comments_array'), 10, 2 );
+
+			// Bind filter that will override the comment count shown in themes
 			add_filter( 'get_comments_number', array($this, 'get_comments_number'), 10, 2 );
 			
+			// Bind action that will add the visibility settings to the metaboxes area of the edit comment page
 			add_action( 'add_meta_boxes', array($this, 'add_meta_boxes') );
 
 			//TODO: Add filter that will remove hidden comments from feeds
@@ -121,8 +130,6 @@
 		 * @return array
 		 */
 		function comments_array($comments, $post_id){	
-
-
 			global $wpdb, $current_user, $post;
 
 			$filtered_comments = array();
@@ -144,8 +151,12 @@
 			$visibility_post_author = intval(self::VISIBILITY_POST_AUTHOR);
 			$visibility_comment_author = intval(self::VISIBILITY_COMMENT_AUTHOR);
 
-
+			// Generate the SQL that will return comments that should be hidden out of the list that is provided
 			if($current_user_id == 0){
+				/* 
+				 * The query for the logged out user doesn't need to join on the posts table because it doesn't need to check if you are the post 
+				 * author. It assumes your not since you aren't logged in.
+				 */
 				$sql = $wpdb->prepare("
 					select comment.comment_ID 
 						from {$wpdb->comments} comment
@@ -160,6 +171,7 @@
 						)", self::FIELD_PREFIX . 'visibility', wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email, wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email);
 			}
 			else{
+				// Same SQL as above except it checks the post author field to see if it is the currently logged in user
 				$sql = $wpdb->prepare("
 					select comment.comment_ID 
 						from {$wpdb->comments} comment
@@ -179,20 +191,28 @@
 			
 			$removed_comments = $wpdb->get_col($sql);
 
+			// Start removing comments along with their children
 			while(count($removed_comments) > 0){
 				$comment_id_to_remove = array_pop($removed_comments);
 				
 				foreach($comments as $key => $comment){
 					if($comment->comment_ID == $comment_id_to_remove){
+						//Remove the comment from the list
 						unset($comments[$key]);
+
+						//TODO: Add some kind of filter here that will allow other plugin/theme developers to simply blur/hide the comment text instead of removing it totally.
 					}
 					else if($comment->comment_parent == $comment_id_to_remove){
+						// Add child comment to the list of comments to remove so that you don't have orphaned comments
 						array_push($comment->comment_ID);
 					}
 				}
 			}
 
+			// Cache the comment count for later use 
 			$this->_comment_counts[$post_id] = count($comments);
+
+			//Normalize the array keys since some might have been removed and return the altered list of comments
 			return array_values($comments);
 		}
 
@@ -251,7 +271,10 @@
 			$field_names = array_keys($this->getFields());
 
 			foreach($field_names as $field_name){
+				// Delete the meta data since you don't want blank values
 				delete_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name );
+
+				//Only save the meta data if it is not blank
 				if(isset($_POST[$field_name]) && !empty($_POST[$field_name])){
 					add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $_POST[$field_name] );
 				}
