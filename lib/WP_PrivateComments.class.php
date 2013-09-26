@@ -50,7 +50,63 @@
 			// Bind action that will add the visibility settings to the metaboxes area of the edit comment page
 			add_action( 'add_meta_boxes', array($this, 'add_meta_boxes') );
 
+			// Bind to the admin menu so that we can have an options page
+			add_action( 'admin_menu', array($this, 'admin_menu') );
+
 			//TODO: Add filter that will remove hidden comments from feeds
+		}
+
+		/**
+		 * Register all the hooks for creating our options page
+		 */
+		function admin_menu(){
+			add_options_page( 'WP Private Comments', 'WP Private Comments', 'activate_plugins', 'wp-priviate-comments' , array($this, 'add_options_page') );
+			add_settings_section( 'wp-priviate-comments-section', __('Settings'), array($this, 'add_settings_section') , 'wp-priviate-comments' );
+			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-show-blank-comment', 'intval' ); 
+			add_settings_field( 'wp-priviate-comments-show-blank-comment', __('Private comment settings'), array($this, 'add_settings_fields'), 'wp-priviate-comments', 'wp-priviate-comments' );
+
+		}
+
+		/**
+		 * Create our options page
+		 */
+		function add_options_page(){
+			
+			?>
+			<div class="wrap">
+				<?php screen_icon(); ?><h2><?php _e('WP Private Comments') ?></h2>
+				<form method="post" action="options.php">
+					<?php settings_fields('wp-priviate-comments'); ?>
+					<?php do_settings_sections('wp-priviate-comments'); ?>
+					<?php submit_button(); ?>
+				</form>
+			</div>
+			<?php
+		}
+
+		/**
+		 * Add the settings table for our options page
+		 */
+		function add_settings_section(){
+			?>
+			<table class="form-table">
+			<?php
+			do_settings_fields('wp-priviate-comments', 'wp-priviate-comments');
+			?>
+			</table>
+			<?php
+		}
+
+		/**
+		 * Add the fields to our settings table
+		 */
+		function add_settings_fields(){			
+			?>
+				<fieldset>
+					<legend class="screen-reader-text"><span><?php _e('Private comment settings'); ?></span></legend>
+					<label for="wp-priviate-comments-show-blank-comment"><input type="checkbox" name="wp-priviate-comments-show-blank-comment" id="wp-priviate-comments-show-blank-comment" value="1" <?php checked('1', get_option('wp-priviate-comments-show-blank-comment')); ?> /> <?php _e('Show invisible comments but hide the content'); ?></label>
+				</fieldset>
+			<?php
 		}
 
 		/**
@@ -193,6 +249,8 @@
 						)", self::FIELD_PREFIX . 'visibility', wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email, wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email);
 			}
 			
+			$show_blank_comment = get_option('wp-priviate-comments-show-blank-comment') == '1';
+
 			// Use the query and get the comment ids that should be removed
 			$removed_comments = $wpdb->get_col($sql);
 
@@ -202,14 +260,17 @@
 				
 				foreach($comments as $key => $comment){
 					if($comment->comment_ID == $comment_id_to_remove){
-						//Remove the comment from the list
-						unset($comments[$key]);
-
-						//TODO: Add some kind of filter here that will allow other plugin/theme developers to simply blur/hide the comment text instead of removing it totally.
+						//Handle a private comment
+						if($show_blank_comment){
+							$comments[$key]->comment_content = apply_filters('WP_PrivateComments::blankComment', '<i>This is a private comment.</i>', $comments[$key]);
+						}
+						else{
+							unset($comments[$key]);
+						}
 					}
 					else if($comment->comment_parent == $comment_id_to_remove){
 						// Add child comment to the list of comments to remove so that you don't have orphaned comments
-						array_push($comment->comment_ID);
+						array_push($removed_comments, $comment->comment_ID);
 					}
 				}
 			}
