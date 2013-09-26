@@ -62,7 +62,7 @@
 				echo $field;
 			}
 
-			wp_nonce_field('wp-private-comments-savedata', self::FIELD_PREFIX . 'NONCE');
+			echo $this->get_nonce();
 		}
 
 		/**
@@ -120,7 +120,9 @@
 		 * @param array $comments 
 		 * @return array
 		 */
-		function comments_array($comments, $post_id){			
+		function comments_array($comments, $post_id){	
+
+
 			global $wpdb, $current_user, $post;
 
 			$filtered_comments = array();
@@ -195,6 +197,22 @@
 		}
 
 		/**
+		 * Get nonce fields for use when saving data
+		 * @return string
+		 */
+		function get_nonce(){
+			return wp_nonce_field('wp-private-comments-savedata', self::FIELD_PREFIX . 'NONCE', true, false);
+		}
+
+		/**
+		 * Verify nonce post fields
+		 * @return boolean
+		 */
+		function verify_nonce(){
+			return wp_verify_nonce($_POST[self::FIELD_PREFIX . 'NONCE'], 'wp-private-comments-savedata');
+		}
+
+		/**
 		 * Append our fields to the $logged_in_as html that is output above the comment form
 		 * @param string $logged_in_as 
 		 * @return string
@@ -206,7 +224,7 @@
 				$logged_in_as .= apply_filters( "comment_form_field_{$name}", $field ) . "\n";
 			}
 
-			$logged_in_as .= wp_nonce_field('wp-private-comments-savedata', self::FIELD_PREFIX . 'NONCE', true, false);
+			$logged_in_as .= $this->get_nonce();
 
 			return $logged_in_as;
 		}
@@ -226,7 +244,7 @@
 		 */
 		function save_visibility_fields( $comment_id ) {
 
-			if(!wp_verify_nonce($_POST[self::FIELD_PREFIX . 'NONCE'], 'wp-private-comments-savedata')){
+			if(!$this->verify_nonce()){
 				return;
 			}
 
