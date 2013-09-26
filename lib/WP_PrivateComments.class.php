@@ -140,14 +140,18 @@
 				$comment_ids[] = intval($comment->comment_ID);
 			}
 
+			// Create a list of the comment ids for use in SQL
 			$comment_ids = implode(',', $comment_ids);
 
+			// Get the currently logged in user
 			$current_user_id = intval($current_user->ID);
 
+			// Get the commenter cookie info just incase the user is an Anonymous user who isn't logged in.
 			$commenter = wp_get_current_commenter();
 			$comment_author = $commenter['comment_author'];
 			$comment_author_email = $commenter['comment_author_email'];
 
+			// Get the visibility settings values for use in the SQL query below
 			$visibility_post_author = intval(self::VISIBILITY_POST_AUTHOR);
 			$visibility_comment_author = intval(self::VISIBILITY_COMMENT_AUTHOR);
 
@@ -189,6 +193,7 @@
 						)", self::FIELD_PREFIX . 'visibility', wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email, wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email);
 			}
 			
+			// Use the query and get the comment ids that should be removed
 			$removed_comments = $wpdb->get_col($sql);
 
 			// Start removing comments along with their children
