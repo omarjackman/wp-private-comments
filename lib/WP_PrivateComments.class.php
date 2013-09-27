@@ -364,7 +364,7 @@
 		 * @return string
 		 */
 		function comment_form_logged_in($logged_in_as) {
-			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return;
+			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return $logged_in_as;
 
 			$fields = $this->get_fields();
 
@@ -384,7 +384,7 @@
 		 */
 		function comment_form_default_fields( $fields ){
 
-			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return;
+			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return $fields;
 
 			$visibility_fields = $this->get_fields();
 			foreach($visibility_fields as $name => $visibility_field){
