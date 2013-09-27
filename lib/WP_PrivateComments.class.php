@@ -78,9 +78,24 @@
 		 */
 		function admin_menu(){
 			add_options_page( 'WP Private Comments', 'WP Private Comments', 'activate_plugins', 'wp-priviate-comments' , array($this, 'add_options_page') );
-			add_settings_section( 'wp-priviate-comments-section', __('Settings'), array($this, 'add_settings_section') , 'wp-priviate-comments' );
-			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-show-blank-comment', 'intval' ); 
-			add_settings_field( 'wp-priviate-comments-show-blank-comment', __('Private comment settings'), array($this, 'add_settings_fields'), 'wp-priviate-comments', 'wp-priviate-comments' );
+			
+			add_settings_section( 'wp-priviate-comments-defaults', __('Settings'), array($this, 'render_settings_section') , 'wp-priviate-comments' );
+
+
+			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-visibility-default');
+			$default_visibility_settings = array(
+				array('type' => 'select', 'name' => 'wp-priviate-comments-visibility-default', 'values' => $this->get_visibility_values()),
+			);
+			add_settings_field( 'wp-priviate-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-defaults', $default_visibility_settings);
+
+			
+			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-show-comment-settings', 'intval' );
+			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-remove-comments', 'intval' );
+			$admin_default_settings = array(
+				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-show-comment-settings', 'default' => 'Show visibility settings to users'),
+				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-remove-comments', 'default' => 'Remove hidden comments'),
+			);						
+			add_settings_field( 'wp-priviate-comments-user-defaults', __('User Defaults'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-defaults', $admin_default_settings);
 
 		}
 
@@ -104,24 +119,36 @@
 		/**
 		 * Add the settings table for our options page
 		 */
-		function add_settings_section(){
-			?>
-			<table class="form-table">
-			<?php
-			do_settings_fields('wp-priviate-comments', 'wp-priviate-comments');
-			?>
-			</table>
-			<?php
+		function render_settings_section($args){
+			// Do nothing
 		}
 
 		/**
 		 * Add the fields to our settings table
 		 */
-		function add_settings_fields(){			
+		function render_setting_fields($options){	
 			?>
 				<fieldset>
-					<legend class="screen-reader-text"><span><?php _e('Private comment settings'); ?></span></legend>
-					<label for="wp-priviate-comments-show-blank-comment"><input type="checkbox" name="wp-priviate-comments-show-blank-comment" id="wp-priviate-comments-show-blank-comment" value="1" <?php checked('1', get_option('wp-priviate-comments-show-blank-comment')); ?> /> <?php _e('Show invisible comments but hide the content'); ?></label>
+					<legend class="screen-reader-text"><span><?php _e($args['label']); ?></span></legend>
+					<?php foreach($options as $option): ?>
+					<?php 		if ($option['type'] == 'checkbox'): ?>
+					<label for="<?php echo $option['name'] ?>"><input type="checkbox" name="<?php echo $option['name'] ?>" id="<?php echo $option['name'] ?>" value="1" <?php checked('1', get_option($option['name'])); ?> /> <?php _e($option['default']); ?></label><br>
+					<?php 		elseif ($option['type'] == 'select'): ?>
+					<select name="<?php echo $option['name'] ?>" id="<?php echo $option['name'] ?>">
+					<?php
+									$selected_value = get_option($option['name']);
+									foreach($option['values'] as $title => $value){
+										if($selected_value == $value){
+											echo '<option value="' . esc_html($value) . '" selected>' . esc_html__($title);
+										}
+										else{
+											echo '<option value="' . esc_html($value) . '">' . esc_html__($title);
+										}
+									}
+					?>
+					</select><br>
+					<?php 		endif; ?>
+					<?php endforeach;?>
 				</fieldset>
 			<?php
 		}
@@ -141,7 +168,7 @@
 			$fields = $this->get_fields($comment->comment_ID);
 
 			foreach ( $fields as $field ) {
-				echo $field;
+				echo $field['html'];
 			}
 
 			echo $this->get_nonce();
@@ -167,7 +194,9 @@
 			
 			$visibility_values = $this->get_visibility_values();
 
-			$selected_visibility_value = ($comment_id) ? get_comment_meta($comment_id , self::FIELD_PREFIX . 'visibility', true) : null;
+			$default_visibility_value = self::VISIBILITY_EVERYONE;
+
+			$selected_visibility_value = ($comment_id) ? get_comment_meta($comment_id , self::FIELD_PREFIX . 'visibility', true) : $default_visibility_value;
 
 			$options = '';
 			foreach($visibility_values as $visibility_value_title => $visibility_value){
@@ -180,7 +209,10 @@
 			}
 
 			return apply_filters('WP_PrivateComments::get_fields', array(
-				'visibility' => '<p class="comment-form-visibility"><label for="visibility">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>'
+				'visibility' => array(
+									'default' => $default_visibility_value,
+									'html' => '<p class="comment-form-visibility"><label for="visibility" style="padding-right:15px">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>'
+								)
 			), $comment_id);
 		}
 
@@ -266,7 +298,7 @@
 						)", self::FIELD_PREFIX . 'visibility', wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email, wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email);
 			}
 			
-			$show_blank_comment = get_option('wp-priviate-comments-show-blank-comment') == '1';
+			$remove_hidden_comments = get_option('wp-priviate-comments-remove-comments') == '1';
 
 			// Use the query and get the comment ids that should be removed
 			$removed_comments = $wpdb->get_col($sql);
@@ -278,13 +310,13 @@
 				foreach($comments as $key => $comment){
 					if($comment->comment_ID == $comment_id_to_remove){
 						//Handle a private comment
-						if($show_blank_comment){
-							//Change the comment text to a message
-							$comments[$key]->comment_content = apply_filters('WP_PrivateComments::blankComment', '<i>This is a private comment.</i>', $comments[$key]);
-						}
-						else{
+						if($remove_hidden_comments){
 							//Remove comment from the array
 							unset($comments[$key]);
+						}
+						else{
+							//Change the comment text to a message
+							$comments[$key]->comment_content = apply_filters('WP_PrivateComments::blankComment', '<i>This is a private comment.</i>', $comments[$key]);
 						}
 					}
 					else if($comment->comment_parent == $comment_id_to_remove){
@@ -328,7 +360,7 @@
 			$fields = $this->get_fields();
 
 			foreach ( $fields as $name => $field ) {
-				$logged_in_as .= apply_filters( "comment_form_field_{$name}", $field ) . "\n";
+				$logged_in_as .= apply_filters( "comment_form_field_{$name}", $field['html'] ) . "\n";
 			}
 
 			$logged_in_as .= $this->get_nonce();
@@ -342,7 +374,11 @@
 		 * @return array
 		 */
 		function comment_form_default_fields( $fields ){
-			return array_merge($fields, $this->get_fields());
+			$visibility_fields = $this->get_fields();
+			foreach($visibility_fields as $name => $visibility_field){
+				$fields[$name] = $visibility_field['html'];
+			}
+			return array_merge($fields, $visibility_fields);
 		}
 
 		/**
