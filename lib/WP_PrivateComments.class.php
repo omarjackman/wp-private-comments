@@ -130,14 +130,14 @@
 		 * Add our meta box to the comments page
 		 */
 		function add_meta_boxes(){
-			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array($this, 'meta_box'), 'comment', 'normal');
+			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array($this, 'comment_meta_box'), 'comment', 'normal');
 		}
 
 		/**
 		 * Display our fields in the meta box
 		 * @param object $comment 
 		 */
-		function meta_box( $comment){
+		function comment_meta_box( $comment){
 			$fields = $this->get_fields($comment->comment_ID);
 
 			foreach ( $fields as $field ) {
