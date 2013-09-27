@@ -64,9 +64,11 @@
 		function filter_wp_query($wp){
 			global $wp_query;
 			
-			
 			if(is_array($wp_query->comments) && count($wp_query->comments) > 0){
+				//Filter the comments array in $wp_query if it exists
 				$wp_query->comments = $this->comments_array($wp_query->comments);
+
+				//Update the comment count just incase comments are removed during the filter
 				$wp_query->comment_count = count($wp_query->comments);
 			}
 		}
