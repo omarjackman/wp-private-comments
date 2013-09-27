@@ -84,15 +84,15 @@
 
 			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-visibility-default');
 			$default_visibility_settings = array(
-				array('type' => 'select', 'name' => 'wp-priviate-comments-visibility-default', 'values' => $this->get_visibility_values()),
+				array('type' => 'select', 'name' => 'wp-priviate-comments-visibility-default', 'values' => $this->get_visibility_values(), 'description' => 'Select the default visibility setting for comments on posts and replies to comments.<BR>Note: This can also be overriden for each post'),
 			);
 			add_settings_field( 'wp-priviate-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-defaults', $default_visibility_settings);
 
 			
-			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-show-comment-settings', 'intval' );
+			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-show-visbility-settings', 'intval' );
 			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-remove-comments', 'intval' );
 			$admin_default_settings = array(
-				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-show-comment-settings', 'default' => 'Show visibility settings to users'),
+				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-show-visbility-settings', 'default' => 'Show visibility settings to users'),
 				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-remove-comments', 'default' => 'Remove hidden comments'),
 			);						
 			add_settings_field( 'wp-priviate-comments-user-defaults', __('User Defaults'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-defaults', $admin_default_settings);
@@ -148,6 +148,9 @@
 					?>
 					</select><br>
 					<?php 		endif; ?>
+					<?php 		if(isset($option['description'])):?>
+					<p class="description"><?php echo $option['description'] ?></p>
+					<?php 		endif; ?>
 					<?php endforeach;?>
 				</fieldset>
 			<?php
@@ -182,7 +185,7 @@
 			return apply_filters('WP_PrivateComments::get_visibility_values', array(
 				'Everyone' => self::VISIBILITY_EVERYONE,
 				'Post author' => self::VISIBILITY_POST_AUTHOR,
-				'Comment author' => self::VISIBILITY_COMMENT_AUTHOR,
+				'Post author and comment author' => self::VISIBILITY_COMMENT_AUTHOR,
 			));
 		}
 
@@ -194,7 +197,11 @@
 			
 			$visibility_values = $this->get_visibility_values();
 
-			$default_visibility_value = self::VISIBILITY_EVERYONE;
+			$default_visibility_value = get_option('wp-priviate-comments-visibility-default');
+			
+			if(empty($default_visibility_value)){
+				$default_visibility_value = self::VISIBILITY_EVERYONE;
+			}
 
 			$selected_visibility_value = ($comment_id) ? get_comment_meta($comment_id , self::FIELD_PREFIX . 'visibility', true) : $default_visibility_value;
 
@@ -357,6 +364,8 @@
 		 * @return string
 		 */
 		function comment_form_logged_in($logged_in_as) {
+			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return;
+
 			$fields = $this->get_fields();
 
 			foreach ( $fields as $name => $field ) {
@@ -374,11 +383,14 @@
 		 * @return array
 		 */
 		function comment_form_default_fields( $fields ){
+
+			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return;
+
 			$visibility_fields = $this->get_fields();
 			foreach($visibility_fields as $name => $visibility_field){
 				$fields[$name] = $visibility_field['html'];
 			}
-			return array_merge($fields, $visibility_fields);
+			return $fields;
 		}
 
 		/**
@@ -386,21 +398,33 @@
 		 * @param int $comment_id 
 		 */
 		function save_visibility_fields( $comment_id ) {
+			$fields = $this->get_fields();
 
-			// a nonce value is always required so verify it here
-			if(!$this->verify_nonce()){
-				return;
+			if(get_option('wp-priviate-comments-show-visbility-settings') == '1'){
+				// a nonce value is always required so verify it here
+				if(!$this->verify_nonce()){
+					return;
+				}
+			
+				foreach($fields as $field_name => $field){
+					// Delete the meta data since you don't want blank values
+					delete_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name );
+
+					//Only save the meta data if it is not blank
+					if(isset($_POST[$field_name]) && !empty($_POST[$field_name])){
+						add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $_POST[$field_name] );
+					}
+				}
 			}
+			else{
+				foreach($fields as $field_name => $field){
+					// Delete the meta data since you don't want blank values
+					delete_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name );
 
-			$field_names = array_keys($this->get_fields());
-
-			foreach($field_names as $field_name){
-				// Delete the meta data since you don't want blank values
-				delete_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name );
-
-				//Only save the meta data if it is not blank
-				if(isset($_POST[$field_name]) && !empty($_POST[$field_name])){
-					add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $_POST[$field_name] );
+					//Only save the meta data if it is not blank
+					if(isset($field['default']) && !empty($field['default'])){
+						add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $field['default'] );
+					}
 				}
 			}
 		}
