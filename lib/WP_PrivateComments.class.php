@@ -79,14 +79,14 @@
 		function admin_menu(){
 			add_options_page( 'WP Private Comments', 'WP Private Comments', 'activate_plugins', 'wp-priviate-comments' , array($this, 'add_options_page') );
 			
-			add_settings_section( 'wp-priviate-comments-defaults', __('Settings'), array($this, 'render_settings_section') , 'wp-priviate-comments' );
+			add_settings_section( 'wp-priviate-comments-settings-section', '', array($this, 'render_settings_section') , 'wp-priviate-comments' );
 
 
 			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-visibility-default');
 			$default_visibility_settings = array(
 				array('type' => 'select', 'name' => 'wp-priviate-comments-visibility-default', 'values' => $this->get_visibility_values(), 'description' => 'Select the default visibility setting for comments on posts and replies to comments.<BR>Note: This can also be overriden for each post'),
 			);
-			add_settings_field( 'wp-priviate-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-defaults', $default_visibility_settings);
+			add_settings_field( 'wp-priviate-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-settings-section', $default_visibility_settings);
 
 			
 			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-show-visbility-settings', 'intval' );
@@ -95,7 +95,7 @@
 				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-show-visbility-settings', 'default' => 'Show visibility settings to users'),
 				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-remove-comments', 'default' => 'Remove hidden comments'),
 			);						
-			add_settings_field( 'wp-priviate-comments-user-defaults', __('User Defaults'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-defaults', $admin_default_settings);
+			add_settings_field( 'wp-priviate-comments-settings', __('Settings'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-settings-section', $admin_default_settings);
 
 		}
 
