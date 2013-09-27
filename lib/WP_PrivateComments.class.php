@@ -53,7 +53,22 @@
 			// Bind to the admin menu so that we can have an options page
 			add_action( 'admin_menu', array($this, 'admin_menu') );
 
-			//TODO: Add filter that will remove hidden comments from feeds
+			// Bind to wp in order to remove hidden comments from feeds and other pages that might include comments on them
+			add_action( 'wp', array($this, 'filter_wp_query') );
+		}
+
+		/**
+		 * Remove comments frorm the $wp_query object
+		 * @param object $wp 
+		 */
+		function filter_wp_query($wp){
+			global $wp_query;
+			
+			
+			if(is_array($wp_query->comments) && count($wp_query->comments) > 0){
+				$wp_query->comments = $this->comments_array($wp_query->comments);
+				$wp_query->comment_count = count($wp_query->comments);
+			}
 		}
 
 		/**
@@ -185,8 +200,8 @@
 		 * @param array $comments 
 		 * @return array
 		 */
-		function comments_array($comments, $post_id){	
-			global $wpdb, $current_user, $post;
+		function comments_array($comments, $post_id = null){
+			global $wpdb, $current_user;
 
 			$filtered_comments = array();
 			
@@ -275,8 +290,10 @@
 				}
 			}
 
-			// Cache the comment count for later use 
-			$this->_comment_counts[$post_id] = count($comments);
+			if($post_id){
+				// Cache the comment count for later use 
+				$this->_comment_counts[$post_id] = count($comments);
+			}
 
 			//Normalize the array keys since some might have been removed and return the altered list of comments
 			return array_values($comments);
