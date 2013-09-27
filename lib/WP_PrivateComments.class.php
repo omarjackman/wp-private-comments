@@ -279,9 +279,11 @@
 					if($comment->comment_ID == $comment_id_to_remove){
 						//Handle a private comment
 						if($show_blank_comment){
+							//Change the comment text to a message
 							$comments[$key]->comment_content = apply_filters('WP_PrivateComments::blankComment', '<i>This is a private comment.</i>', $comments[$key]);
 						}
 						else{
+							//Remove comment from the array
 							unset($comments[$key]);
 						}
 					}
