@@ -392,10 +392,19 @@
 		 * @return string
 		 */
 		function comment_form_logged_in($logged_in_as) {
+			global $post;
+
 			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return $logged_in_as;
 
+			// Get the visibility setting from the post if its been set
+			if($post){
+				$default_visibility = get_post_meta($post->ID, self::FIELD_PREFIX . 'visibility', true);
+			}
+			else{
+				$default_visibility = null;
+			}
 			
-			$logged_in_as .= apply_filters( "comment_form_field_visibility", $this->get_field_html() ) . "\n";
+			$logged_in_as .= apply_filters( "comment_form_field_visibility", $this->get_field_html($default_visibility) ) . "\n";
 			$logged_in_as .= $this->get_nonce();
 
 			return $logged_in_as;
@@ -407,12 +416,21 @@
 		 * @return array
 		 */
 		function comment_form_default_fields( $fields ){
+			global $post;
 
 			if(get_option('wp-priviate-comments-show-visbility-settings') != '1'){
 				return $fields;
 			}
 
-			$fields['visibility'] = $this->get_field_html();
+			// Get the visibility setting from the post if its been set
+			if($post){
+				$default_visibility = get_post_meta($post->ID, self::FIELD_PREFIX . 'visibility', true);
+			}
+			else{
+				$default_visibility = null;
+			}
+
+			$fields['visibility'] = $this->get_field_html($default_visibility);
 			return $fields;
 		}
 
@@ -441,10 +459,21 @@
 				}
 			}
 			else{
+
+				// Get the visibility setting from the post if its been set
+				if($comment = get_comment($comment_id)){
+					$default_visibility = get_post_meta($comment->comment_post_ID, self::FIELD_PREFIX . 'visibility', true);
+				}
+				else{
+					$default_visibility = null;
+				}
+
+				if($default_visibility == null){
+					$default_visibility = $this->get_default_visiblity();
+				}
+
 				// Delete the meta data since you don't want blank values
 				delete_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility' );
-
-				$default_visibility = $this->get_default_visiblity();
 
 				//Only save the meta data if it is not blank
 				if(!empty($default_visibility)){
