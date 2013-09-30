@@ -164,16 +164,11 @@
 		}
 
 		/**
-		 * Display our fields in the meta box
+		 * Display our fields in the comment meta box
 		 * @param object $comment 
 		 */
 		function comment_meta_box( $comment){
-			$fields = $this->get_fields($comment->comment_ID);
-
-			foreach ( $fields as $field ) {
-				echo $field['html'];
-			}
-
+			echo $this->get_field_html( get_comment_meta($comment->comment_ID, self::FIELD_PREFIX . 'visibility', true) );
 			echo $this->get_nonce();
 		}
 
@@ -190,20 +185,28 @@
 		}
 
 		/**
-		 * Get the fields that will be placed on a comment form
+		 * Get the default visibility value
+		 * @return string
+		 */
+		function get_default_visiblity(){
+			$default_visibility = get_option('wp-priviate-comments-visibility-default');
+			if($default_visibility == null){
+				$default_visibility = self::VISIBILITY_EVERYONE;
+			}
+			return $default_visibility;
+		}
+
+		/**
+		 * Get the html for the visibility field that will be placed on a comment form
 		 * @return array
 		 */
-		function get_fields($comment_id = null){
+		function get_field_html($selected_visibility_value = null){
 			
 			$visibility_values = $this->get_visibility_values();
 
-			$default_visibility_value = get_option('wp-priviate-comments-visibility-default');
-			
-			if(empty($default_visibility_value)){
-				$default_visibility_value = self::VISIBILITY_EVERYONE;
+			if($selected_visibility_value == null){
+				$selected_visibility_value = $this->get_default_visiblity();
 			}
-
-			$selected_visibility_value = ($comment_id) ? get_comment_meta($comment_id , self::FIELD_PREFIX . 'visibility', true) : $default_visibility_value;
 
 			$options = '';
 			foreach($visibility_values as $visibility_value_title => $visibility_value){
@@ -215,12 +218,7 @@
 				}
 			}
 
-			return apply_filters('WP_PrivateComments::get_fields', array(
-				'visibility' => array(
-									'default' => $default_visibility_value,
-									'html' => '<p class="comment-form-visibility"><label for="visibility" style="padding-right:15px">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>'
-								)
-			), $comment_id);
+			return apply_filters('WP_PrivateComments::get_field_html', '<p class="comment-form-visibility"><label for="visibility" style="padding-right:15px">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>', $comment_id);
 		}
 
 		/**
@@ -366,12 +364,8 @@
 		function comment_form_logged_in($logged_in_as) {
 			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return $logged_in_as;
 
-			$fields = $this->get_fields();
-
-			foreach ( $fields as $name => $field ) {
-				$logged_in_as .= apply_filters( "comment_form_field_{$name}", $field['html'] ) . "\n";
-			}
-
+			
+			$logged_in_as .= apply_filters( "comment_form_field_visibility", $this->get_field_html() ) . "\n";
 			$logged_in_as .= $this->get_nonce();
 
 			return $logged_in_as;
@@ -384,48 +378,43 @@
 		 */
 		function comment_form_default_fields( $fields ){
 
-			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return $fields;
-
-			$visibility_fields = $this->get_fields();
-			foreach($visibility_fields as $name => $visibility_field){
-				$fields[$name] = $visibility_field['html'];
+			if(get_option('wp-priviate-comments-show-visbility-settings') != '1'){
+				return $fields;
 			}
+
+			$fields['visibility'] = $this->get_field_html();
 			return $fields;
 		}
 
 		/**
-		 * Save the fields that were added to the comment form as meta data for later use
+		 * Save the visibility field that was added to the comment form as meta data for later use
 		 * @param int $comment_id 
 		 */
 		function save_visibility_fields( $comment_id ) {
-			$fields = $this->get_fields();
-
 			if(get_option('wp-priviate-comments-show-visbility-settings') == '1'){
 				// a nonce value is always required so verify it here
 				if(!$this->verify_nonce()){
 					return;
 				}
 			
-				foreach($fields as $field_name => $field){
-					// Delete the meta data since you don't want blank values
-					delete_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name );
+				// Delete the meta data since you don't want blank values
+				delete_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility' );
 
-					//Only save the meta data if it is not blank
-					if(isset($_POST[$field_name]) && !empty($_POST[$field_name])){
-						add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $_POST[$field_name] );
-					}
+				//Only save the meta data if it is not blank
+				if(isset($_POST['visibility']) && !empty($_POST['visibility'])){
+					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', $_POST['visibility'] );
 				}
 			}
 			else{
-				foreach($fields as $field_name => $field){
-					// Delete the meta data since you don't want blank values
-					delete_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name );
+				// Delete the meta data since you don't want blank values
+				delete_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility' );
 
-					//Only save the meta data if it is not blank
-					if(isset($field['default']) && !empty($field['default'])){
-						add_comment_meta( $comment_id, self::FIELD_PREFIX . $field_name, $field['default'] );
-					}
-				}
+				$default_visibility = $this->get_default_visiblity();
+
+				//Only save the meta data if it is not blank
+				if(!empty($default_visibility)){
+					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', $default_visibility );
+				}			
 			}
 		}
 	}
