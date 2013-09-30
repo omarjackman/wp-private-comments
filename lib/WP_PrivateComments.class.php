@@ -38,6 +38,9 @@
 			// Bind actions that will server for saving the visibility preferences
 			add_action( 'comment_post', array($this, 'save_visibility_fields') );
 			add_action( 'edit_comment', array($this, 'save_visibility_fields') );
+
+			// Bind to the save_post action so we can set the default visibility for future comments of the saved post
+			add_action( 'save_post', array($this, 'save_visibility_fields_for_post') );
 			 
 			// Bind filters that will server for loading the visibility fields into the necessary forms
 			add_filter( 'comment_form_default_fields', array($this, 'comment_form_default_fields') );
@@ -161,6 +164,7 @@
 		 */
 		function add_meta_boxes(){
 			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array($this, 'comment_meta_box'), 'comment', 'normal');
+			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array($this, 'post_meta_box'), 'post', 'normal');
 		}
 
 		/**
@@ -170,6 +174,32 @@
 		function comment_meta_box( $comment){
 			echo $this->get_field_html( get_comment_meta($comment->comment_ID, self::FIELD_PREFIX . 'visibility', true) );
 			echo $this->get_nonce();
+		}
+
+		/**
+		 * Display our fields in the comment meta box
+		 * @param object $comment 
+		 */
+		function post_meta_box( $post ){
+			// Override the get_visibility_values function so that we can add an extra value which will represent the blog default
+			add_filter( 'WP_PrivateComments::get_visibility_values', array($this, 'get_visibility_values_for_post') );
+			
+			$default_visibility = get_post_meta($post->ID, self::FIELD_PREFIX . 'visibility', true);
+
+			echo $this->get_field_html( $default_visibility ? $default_visibility : "-1");
+			echo $this->get_nonce();
+
+			// remove the filter we added before since it was only for one time use above
+			remove_filter( 'WP_PrivateComments::get_visibility_values', array($this, 'get_visibility_values_for_post') );
+		}
+
+		/**
+		 * Get the visibility values with an extra value added just for the post meta box
+		 * @param array $values 
+		 * @return array
+		 */
+		function get_visibility_values_for_post($values){
+			return array_merge(array('-- Blog Default --' => -1), $values);
 		}
 
 		/**
@@ -389,12 +419,17 @@
 		/**
 		 * Save the visibility field that was added to the comment form as meta data for later use
 		 * @param int $comment_id 
+		 * @return int
 		 */
 		function save_visibility_fields( $comment_id ) {
+			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+			if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
+				return $comment_id;
+
 			if(get_option('wp-priviate-comments-show-visbility-settings') == '1'){
 				// a nonce value is always required so verify it here
 				if(!$this->verify_nonce()){
-					return;
+					return $comment_id;
 				}
 			
 				// Delete the meta data since you don't want blank values
@@ -402,7 +437,7 @@
 
 				//Only save the meta data if it is not blank
 				if(isset($_POST['visibility']) && !empty($_POST['visibility'])){
-					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', $_POST['visibility'] );
+					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($_POST['visibility']) );
 				}
 			}
 			else{
@@ -413,8 +448,40 @@
 
 				//Only save the meta data if it is not blank
 				if(!empty($default_visibility)){
-					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', $default_visibility );
+					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($default_visibility) );
 				}			
+			}
+			return $comment_id;
+		}
+
+		function save_visibility_fields_for_post( $post_id ){
+			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+			if( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
+				return $post_id;
+
+			// a nonce value is always required so verify it here
+			if(!$this->verify_nonce()){
+				return $post_id;
+			}
+
+			// Check the user's permissions.
+			if('page' == $_POST['post_type']){
+				if(!current_user_can('edit_page', $post_id)){
+					return $post_id;
+				}
+			}
+			else {
+				if(!current_user_can('edit_post', $post_id)){
+					return $post_id;
+				}
+			}
+
+			// Delete the meta data since you don't want blank values
+			delete_post_meta( $post_id, self::FIELD_PREFIX . 'visibility' );
+
+			//Only save the meta data if it is not blank and not set to "Blog Default"
+			if(isset($_POST['visibility']) && !empty($_POST['visibility']) && $_POST['visibility'] != '-1'){
+				add_post_meta( $post_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($_POST['visibility']) );
 			}
 		}
 	}
