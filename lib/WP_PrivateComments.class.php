@@ -316,8 +316,6 @@
 				where comment.comment_ID in ({$comment_ids})", self::FIELD_PREFIX . 'visibility');
 			$comments_to_check = $wpdb->get_results($sql);
 
-			var_dump($comment_ids);
-			var_dump($comments_to_check);
 			$removed_comments = array();
 
 			foreach($comments_to_check as $comment_to_check){
@@ -353,7 +351,7 @@
 					$removed_comments[] = $comment_to_check->comment_ID;
 				}
 			}
-			var_dump($removed_comments);
+			
 			$remove_hidden_comments = get_option('wp-priviate-comments-remove-comments') == '1';
 
 			// Start removing comments along with their children
