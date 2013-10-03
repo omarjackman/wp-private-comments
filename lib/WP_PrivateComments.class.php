@@ -50,6 +50,9 @@
 			add_filter( 'comments_array', array($this, 'comments_array'), 10, 2 );
 			add_filter( 'the_comments', array($this, 'the_comments'), 10, 2 );
 
+			// Bind to wp in order to remove hidden comments from feeds and other pages that might include comments on them
+			add_action( 'wp', array($this, 'filter_wp_query') );
+
 			// Bind to the comment reply filter so that users cant reply to comments that are private
 			add_filter( 'comment_reply_link', array($this, 'comment_reply_link'), 10, 4 );
 
@@ -61,9 +64,6 @@
 
 			// Bind to the admin menu so that we can have an options page
 			add_action( 'admin_menu', array($this, 'admin_menu') );
-
-			// Bind to wp in order to remove hidden comments from feeds and other pages that might include comments on them
-			add_action( 'wp', array($this, 'filter_wp_query') );
 		}
 
 		/**
