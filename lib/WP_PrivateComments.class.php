@@ -69,7 +69,7 @@
 			
 			if(is_array($wp_query->comments) && count($wp_query->comments) > 0){
 				//Filter the comments array in $wp_query if it exists
-				$wp_query->comments = $this->comments_array($wp_query->comments);
+				$wp_query->comments = $this->filter_comments($wp_query->comments);
 
 				//Update the comment count just incase comments are removed during the filter
 				$wp_query->comment_count = count($wp_query->comments);
@@ -269,7 +269,7 @@
 		 * @param array $comments 
 		 * @return array
 		 */
-		function comments_array($comments, $post_id = null){
+		function filter_comments($comments, $post_id = null){
 			global $wpdb, $current_user;
 
 			$filtered_comments = array();
@@ -384,6 +384,15 @@
 		 */
 		function verify_nonce(){
 			return wp_verify_nonce($_POST[self::FIELD_PREFIX . 'NONCE'], 'wp-private-comments-savedata');
+		}
+
+		/**
+		 * Callback for the comments_array filter. This will filter out the comments that should be hidden
+		 * @param type $comments 
+		 * @return type
+		 */
+		function comments_array($comments, $post_id) {
+			return $this->filter_comments($comments, $post_id);
 		}
 
 		/**
