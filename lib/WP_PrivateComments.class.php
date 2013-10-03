@@ -67,22 +67,6 @@
 		}
 
 		/**
-		 * Remove comments frorm the $wp_query object
-		 * @param object $wp 
-		 */
-		function filter_wp_query($wp){
-			global $wp_query;
-			
-			if(is_array($wp_query->comments) && count($wp_query->comments) > 0){
-				//Filter the comments array in $wp_query if it exists
-				$wp_query->comments = $this->filter_comments($wp_query->comments);
-
-				//Update the comment count just incase comments are removed during the filter
-				$wp_query->comment_count = count($wp_query->comments);
-			}
-		}
-
-		/**
 		 * Register all the hooks for creating our options page
 		 */
 		function admin_menu(){
@@ -431,6 +415,22 @@
 		function the_comments($comments, $wp_comment_query) {
 			$post_id = ($wp_comment_query->query_vars['post_ID']) ? intval($wp_comment_query->query_vars['post_ID']) : null;
 			return $this->filter_comments($comments, $post_id);
+		}
+
+		/**
+		 * Remove comments frorm the $wp_query object
+		 * @param object $wp 
+		 */
+		function filter_wp_query($wp){
+			global $wp_query;
+			
+			if(is_array($wp_query->comments) && count($wp_query->comments) > 0){
+				//Filter the comments array in $wp_query if it exists
+				$wp_query->comments = $this->filter_comments($wp_query->comments);
+
+				//Update the comment count just incase comments are removed during the filter
+				$wp_query->comment_count = count($wp_query->comments);
+			}
 		}
 
 		/**
