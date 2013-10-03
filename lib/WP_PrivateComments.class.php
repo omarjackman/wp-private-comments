@@ -343,7 +343,7 @@
 						if($comment_to_check->parent_comment_author == $comment_author && $comment_to_check->parent_comment_author_email == $comment_author_email){
 							//dont hide the comment
 							$remove_the_comment = false;
-						}						
+						}
 					}
 				}
 
