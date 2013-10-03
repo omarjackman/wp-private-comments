@@ -296,54 +296,67 @@
 			$visibility_post_author = intval(self::VISIBILITY_POST_AUTHOR);
 			$visibility_comment_author = intval(self::VISIBILITY_COMMENT_AUTHOR);
 
-			// Generate the SQL that will return comments that should be hidden out of the list that is provided
-			if($current_user_id == 0){
-				/* 
-				 * The query for the logged out user doesn't need to join on the posts table because it doesn't need to check if you are the post 
-				 * author. It assumes your not since you aren't logged in.
-				 */
-				$sql = $wpdb->prepare("
-					select comment.comment_ID 
-						from {$wpdb->comments} comment
-							inner join {$wpdb->commentmeta} meta on meta.comment_id = comment.comment_ID and meta.meta_key = %s
-							left outer join {$wpdb->comments} comment_parent on comment_parent.comment_ID = comment.comment_parent
-					where comment.comment_ID in ({$comment_ids})
-						and !(comment.comment_author = %s and comment.comment_author_email = %s)
-						and ( 
-							(meta.meta_value = '{$visibility_post_author}' ) 
-							|| (meta.meta_value = '{$visibility_comment_author}' and comment_parent.user_id != {$current_user_id})
-							|| (meta.meta_value = '{$visibility_comment_author}' and !(comment_parent.comment_author = %s && comment_parent.comment_author_email = %s) ) 
-						)", self::FIELD_PREFIX . 'visibility', wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email, wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email);
-			}
-			else{
-				// Same SQL as above except it checks the post author field to see if it is the currently logged in user
-				$sql = $wpdb->prepare("
-					select comment.comment_ID 
-						from {$wpdb->comments} comment
-							inner join {$wpdb->commentmeta} meta on meta.comment_id = comment.comment_ID and meta.meta_key = %s
-							inner join {$wpdb->posts} post on post.ID = comment.comment_post_ID 
-							left outer join {$wpdb->comments} comment_parent on comment_parent.comment_ID = comment.comment_parent
-					where comment.comment_ID in ({$comment_ids})
-						and post.post_author != {$current_user_id} 
-						and comment.user_id != {$current_user_id}
-						and !(comment.comment_author = %s and comment.comment_author_email = %s)
-						and ( 
-							(meta.meta_value = '{$visibility_post_author}' ) 
-							|| (meta.meta_value = '{$visibility_comment_author}' and comment_parent.user_id != {$current_user_id})
-							|| (meta.meta_value = '{$visibility_comment_author}' and !(comment_parent.comment_author = %s && comment_parent.comment_author_email = %s) ) 
-						)", self::FIELD_PREFIX . 'visibility', wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email, wp_specialchars_decode($comment_author,ENT_QUOTES), $comment_author_email);
-			}
+			// Generate the SQL that will return comments that should be inspected and filtered out if needed
 			
-			$remove_hidden_comments = get_option('wp-priviate-comments-remove-comments') == '1';
+			/* 
+			 * The query for the logged out user doesn't need to join on the posts table because it doesn't need to check if you are the post 
+			 * author. It assumes your not since you aren't logged in.
+			 */
+			$sql = $wpdb->prepare("
+				select comment.comment_ID, meta.meta_value, post.post_author, comment.comment_author, comment.comment_author_email, comment.user_id, comment_parent.comment_author `parent_comment_author`, comment_parent.comment_author_email `parent_comment_author_email`, comment_parent.user_id `parent_comment_user_id`
+					from {$wpdb->comments} comment
+						inner join {$wpdb->commentmeta} meta on meta.comment_id = comment.comment_ID and meta.meta_key = %s
+						inner join {$wpdb->posts} post on post.ID = comment.comment_post_ID
+						left outer join {$wpdb->comments} comment_parent on comment_parent.comment_ID = comment.comment_parent
+				where comment.comment_ID in ({$comment_ids})", self::FIELD_PREFIX . 'visibility');
+			$comments_to_check = $wpdb->get_results($sql);
 
-			// Use the query and get the comment ids that should be removed
-			$removed_comments = $wpdb->get_col($sql);
+			var_dump($comment_ids);
+			var_dump($comments_to_check);
+			$removed_comments = array();
+
+			foreach($comments_to_check as $comment_to_check){
+
+				$remove_the_comment = true;
+
+				//Check if the current user is the author of the comment or the post
+				if($current_user_id != 0){
+					// Is the current logged in user the post author or the comment author
+					if($comment_to_check->post_author == $current_user_id || $comment_to_check->user_id == $current_user_id){
+						//dont hide the comment
+						$remove_the_comment = false;
+					}
+				}
+				else{
+					// Is the current anonymous user the author of the comment
+					if($comment_to_check->comment_author == $comment_author && $comment_to_check->comment_author_email == $comment_author_email){
+						//dont hide the comment
+						$remove_the_comment = false;
+					}
+
+					if($comment_to_check->meta_value == self::VISIBILITY_COMMENT_AUTHOR){
+
+						// Is the current anonymous user the author of the parent comment
+						if($comment_to_check->parent_comment_author == $comment_author && $comment_to_check->parent_comment_author_email == $comment_author_email){
+							//dont hide the comment
+							$remove_the_comment = false;
+						}						
+					}
+				}
+
+				if($remove_the_comment){
+					$removed_comments[] = $comment_to_check->comment_ID;
+				}
+			}
+			var_dump($removed_comments);
+			$remove_hidden_comments = get_option('wp-priviate-comments-remove-comments') == '1';
 
 			// Start removing comments along with their children
 			while(count($removed_comments) > 0){
 				$comment_id_to_remove = array_pop($removed_comments);
 				
 				foreach($comments as $key => $comment){
+					
 					if($comment->comment_ID == $comment_id_to_remove){
 						//Handle a private comment
 						if($remove_hidden_comments){
@@ -352,10 +365,19 @@
 						}
 						else{
 							//Change the comment text to a message
-							$comments[$key]->comment_content = apply_filters('WP_PrivateComments::blankComment', '<i>This is a private comment.</i>', $comments[$key]);
+							$replacements = apply_filters('WP_PrivateComments::private::replacements', array(
+								'comment_content' => '<i>This is a private comment.</i>',
+								'comment_author' => '<i>private</i>',
+								'comment_author_email' => '<i>private</i>',
+							), $comments[$key]);
+
+							foreach($replacements as $replacement_key => $replacement_value){
+								$comments[$key]->$replacement_key = $replacement_value;
+							}
+							$comments[$key]->is_private = true;
 						}
 					}
-					else if($comment->comment_parent == $comment_id_to_remove){
+					else if($comment->comment_parent == $comment_id_to_remove && $remove_hidden_comments){
 						// Add child comment to the list of comments to remove so that you don't have orphaned comments
 						array_push($removed_comments, $comment->comment_ID);
 					}
