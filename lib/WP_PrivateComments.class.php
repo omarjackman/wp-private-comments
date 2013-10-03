@@ -442,7 +442,7 @@
 		 * @return type
 		 */
 		function comment_reply_link($link, $args, $comment, $post){
-			return isset($comment->is_private) ? false : $link;
+			return (isset($comment->is_private) && $comment->is_private) ? false : $link;
 		}
 
 		/**
