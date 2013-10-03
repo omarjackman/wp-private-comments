@@ -46,6 +46,7 @@
 			add_filter( 'comment_form_default_fields', array($this, 'comment_form_default_fields') );
 			add_filter( 'comment_form_logged_in', array($this, 'comment_form_logged_in') );
 			add_filter( 'comments_array', array($this, 'comments_array'), 10, 2 );
+			add_filter( 'the_comments', array($this, 'the_comments'), 10, 2 );
 
 			// Bind filter that will override the comment count shown in themes
 			add_filter( 'get_comments_number', array($this, 'get_comments_number'), 10, 2 );
@@ -388,10 +389,22 @@
 
 		/**
 		 * Callback for the comments_array filter. This will filter out the comments that should be hidden
-		 * @param type $comments 
-		 * @return type
+		 * @param array $comments 
+		 * @param int $post_id 
+		 * @return array
 		 */
 		function comments_array($comments, $post_id) {
+			return $this->filter_comments($comments, $post_id);
+		}
+
+		/**
+		 * Callback for the the_comments filter. This will filter out the comments that should be hidden
+		 * @param array $comments 
+		 * @param object $wp_comment_query 
+		 * @return array
+		 */
+		function the_comments($comments, $wp_comment_query) {
+			$post_id = ($wp_comment_query->query_vars['post_ID']) ? intval($wp_comment_query->query_vars['post_ID']) : null;
 			return $this->filter_comments($comments, $post_id);
 		}
 
