@@ -542,6 +542,11 @@
 			return $comment_id;
 		}
 
+		/**
+		 * Save the visibility field that was added to the post form as meta data for later use when adding comments
+		 * @param int $post_id 
+		 * @return int
+		 */
 		function save_visibility_fields_for_post( $post_id ){
 			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
 			if( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
