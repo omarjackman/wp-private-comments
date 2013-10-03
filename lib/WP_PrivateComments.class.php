@@ -463,7 +463,7 @@
 				$default_visibility = null;
 			}
 			
-			$logged_in_as .= apply_filters( "comment_form_field_visibility", $this->get_field_html($default_visibility) ) . "\n";
+			$logged_in_as .= apply_filters( "WP_PrivateComments::comment_form_logged_in", $this->get_field_html($default_visibility) ) . "\n";
 			$logged_in_as .= $this->get_nonce();
 
 			return $logged_in_as;
