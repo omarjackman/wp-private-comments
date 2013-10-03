@@ -45,8 +45,13 @@
 			// Bind filters that will server for loading the visibility fields into the necessary forms
 			add_filter( 'comment_form_default_fields', array($this, 'comment_form_default_fields') );
 			add_filter( 'comment_form_logged_in', array($this, 'comment_form_logged_in') );
+
+			// Bind filters that will filter out comments that shouldn't be visible for the current user
 			add_filter( 'comments_array', array($this, 'comments_array'), 10, 2 );
 			add_filter( 'the_comments', array($this, 'the_comments'), 10, 2 );
+
+			// Bind to the comment reply filter so that users cant reply to comments that are private
+			add_filter( 'comment_reply_link', array($this, 'comment_reply_link'), 10, 4 );
 
 			// Bind filter that will override the comment count shown in themes
 			add_filter( 'get_comments_number', array($this, 'get_comments_number'), 10, 2 );
@@ -428,6 +433,18 @@
 		function the_comments($comments, $wp_comment_query) {
 			$post_id = ($wp_comment_query->query_vars['post_ID']) ? intval($wp_comment_query->query_vars['post_ID']) : null;
 			return $this->filter_comments($comments, $post_id);
+		}
+
+		/**
+		 * Filter the comment reply link so that you cannot reply to private comments
+		 * @param string $link 
+		 * @param array $args 
+		 * @param object $comment 
+		 * @param object $post 
+		 * @return type
+		 */
+		function comment_reply_link($link, $args, $comment, $post){
+			return isset($comment->is_private) ? false : $link;
 		}
 
 		/**
