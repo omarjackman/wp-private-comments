@@ -103,9 +103,9 @@
 		 * Check if the intense debate plugin is enabled and give a warning if it is
 		 */
 		function intensedebate_check(){
-			// Check to see if the jetpack comments module is enabled and the show visibility settings to users option is checked
+			// Check to see if the intense debate plugin is enable
 			if ( $this->intensedebate_enabled() ) {
-				// The comments module is enabled and the show visibility settings to users option is checked so show the user a warning
+				// The plugin is enabled so show the user a warning
 				add_action( 'admin_notices', array($this, 'intensedebate_notice') );
 			}
 		}
