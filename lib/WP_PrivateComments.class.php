@@ -298,7 +298,7 @@
 			
 			$visibility_values = $this->get_visibility_values();
 
-			if($selected_visibility_value == null){
+			if( is_null($selected_visibility_value) ){
 				$selected_visibility_value = $this->get_default_visiblity();
 			}
 
@@ -335,6 +335,13 @@
 		 */
 		function filter_comments($comments, $post_id = null){
 			global $wpdb, $current_user;
+
+			// Check if the logged in user can edit others posts. If they can then that also means they can edit comments belonging to those posts
+			if(current_user_can('edit_others_posts')){
+				// Don't filter out any comments
+				return $comments;
+			}
+
 
 			$filtered_comments = array();
 			
