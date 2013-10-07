@@ -428,7 +428,7 @@
 							//Change the comment text to a message
 							$replacements = apply_filters('WP_PrivateComments::private::replacements', array(
 								'comment_content' => '<i>This is a private comment.</i>',
-								'comment_author' => '<i>private</i>',
+								'comment_author' => 'private',
 								'comment_author_email' => '<i>private</i>',
 							), $comments[$key]);
 
