@@ -591,7 +591,7 @@
 					$default_visibility = null;
 				}
 
-				if($default_visibility == null){
+				if( is_null($default_visibility) ){
 					$default_visibility = $this->get_default_visiblity();
 				}
 
