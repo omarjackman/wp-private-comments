@@ -64,6 +64,44 @@
 
 			// Bind to the admin menu so that we can have an options page
 			add_action( 'admin_menu', array($this, 'admin_menu') );
+
+			// Bind to the admin_init action so that we can do a check for jetpack
+			add_action( 'admin_init', array($this, 'jetpack_comments_check') );
+		}
+
+		/**
+		 * Checks to see if Jetpacks comments is enabled
+		 * @return boolean
+		 */
+		function jetpack_comments_enabled(){
+			return class_exists('Jetpack') && in_array('comments', Jetpack::get_active_modules());
+		}
+
+		/**
+		 * Check if Jetpack comments are enabled an show compatibility warnings if it is
+		 */
+		function jetpack_comments_check(){
+			// Check to see if the jetpack comments module is enabled and the show visibility settings to users option is checked
+			if ( $this->jetpack_comments_enabled() && get_option('wp-priviate-comments-show-visbility-settings') == '1') {
+				// The comments module is enabled and the show visibility settings to users option is checked so show the user a warning
+				add_action( 'admin_notices', array($this, 'jetpack_comments_notice') );
+			}
+		}
+
+		/**
+		 * Show the user a warning about the incompatibility with Jetpack Comments
+		 * @return type
+		 */
+		function jetpack_comments_notice() {
+			?>
+			<div class="error">
+				<p>
+					The WP Private Comments plugin "Show visibility settings to users" option is currently incompatible with Jetpack Comments.
+					<br>The default you've set will be applied to all future comments
+					<br>You can modify your settings <a href="<?php echo get_admin_url(null, 'options-general.php?page=wp-priviate-comments'); ?>">here</a>
+				</p>
+			</div>
+			<?php
 		}
 
 		/**
@@ -161,7 +199,7 @@
 		 * Display our fields in the comment meta box
 		 * @param object $comment 
 		 */
-		function comment_meta_box( $comment){
+		function comment_meta_box( $comment ){
 			echo $this->get_field_html( get_comment_meta($comment->comment_ID, self::FIELD_PREFIX . 'visibility', true) );
 			echo $this->get_nonce();
 		}
@@ -494,31 +532,14 @@
 		}
 
 		/**
-		 * Save the visibility field that was added to the comment form as meta data for later use
+		 * Set the visibility for a comment
 		 * @param int $comment_id 
-		 * @return int
+		 * @param string $visibility 
+		 * @return type
 		 */
-		function save_visibility_fields( $comment_id ) {
-			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
-			if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
-				return $comment_id;
+		function set_comment_visibility( $comment_id, $visibility = null) {
 
-			if(get_option('wp-priviate-comments-show-visbility-settings') == '1'){
-				// a nonce value is always required so verify it here
-				if(!$this->verify_nonce()){
-					return $comment_id;
-				}
-			
-				// Delete the meta data since you don't want blank values
-				delete_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility' );
-
-				//Only save the meta data if it is not blank
-				if(isset($_POST['visibility']) && !empty($_POST['visibility'])){
-					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($_POST['visibility']) );
-				}
-			}
-			else{
-
+			if( is_null($visibility) ) {
 				// Get the visibility setting from the post if its been set
 				if($comment = get_comment($comment_id)){
 					$default_visibility = get_post_meta($comment->comment_post_ID, self::FIELD_PREFIX . 'visibility', true);
@@ -531,14 +552,47 @@
 					$default_visibility = $this->get_default_visiblity();
 				}
 
-				// Delete the meta data since you don't want blank values
-				delete_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility' );
-
-				//Only save the meta data if it is not blank
-				if(!empty($default_visibility)){
-					add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($default_visibility) );
-				}			
+				$visibility = $default_visibility;
 			}
+
+			// Delete the meta data since you don't want blank values
+			delete_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility' );
+
+			//Only save the meta data if it is not blank
+			if(!empty($visibility)){
+				add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($visibility) );
+			}	
+		}
+
+		/**
+		 * Save the visibility field that was added to the comment form as meta data for later use
+		 * @param int $comment_id 
+		 * @return int
+		 */
+		function save_visibility_fields( $comment_id ) {
+			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+			if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
+				return $comment_id;
+
+			// Check to see if the user was able to override the default setting
+			if(get_option('wp-priviate-comments-show-visbility-settings') == '1'){
+				
+				// a nonce value is always required so verify it here
+				if(!$this->verify_nonce()){
+					// There wasn't a valid nonce value so just use the default set by the administrator
+					$this->set_comment_visibility($comment_id);
+					return $comment_id;
+				}
+
+				// Use the value that was submitted by the user
+				$this->set_comment_visibility($comment_id, $_POST['visibility']);
+			}
+			else{
+
+				// Use the default set by the administrator
+				$this->set_comment_visibility($comment_id);						
+			}
+
 			return $comment_id;
 		}
 
