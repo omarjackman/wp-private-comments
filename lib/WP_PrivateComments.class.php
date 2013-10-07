@@ -429,7 +429,7 @@
 							$replacements = apply_filters('WP_PrivateComments::private::replacements', array(
 								'comment_content' => '<i>This is a private comment.</i>',
 								'comment_author' => 'private',
-								'comment_author_email' => '<i>private</i>',
+								'comment_author_email' => 'private',
 							), $comments[$key]);
 
 							foreach($replacements as $replacement_key => $replacement_value){
