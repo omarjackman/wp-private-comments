@@ -67,6 +67,9 @@
 
 			// Bind to the admin_init action so that we can do a check for jetpack
 			add_action( 'admin_init', array($this, 'jetpack_comments_check') );
+
+			// Bind to the admin_init action so that we can do a check for intense debate
+			add_action( 'admin_init', array($this, 'intensedebate_check') );
 		}
 
 		/**
@@ -78,13 +81,32 @@
 		}
 
 		/**
+		 * Checks to see if Jetpacks comments is enabled
+		 * @return boolean
+		 */
+		function intensedebate_enabled(){
+			return defined('ID_PLUGIN_VERSION');
+		}
+
+		/**
 		 * Check if Jetpack comments are enabled an show compatibility warnings if it is
 		 */
 		function jetpack_comments_check(){
 			// Check to see if the jetpack comments module is enabled and the show visibility settings to users option is checked
-			if ( $this->jetpack_comments_enabled() && get_option('wp-priviate-comments-show-visbility-settings') == '1') {
+			if ( $this->jetpack_comments_enabled() && get_option('wp-priviate-comments-show-visbility-settings') == '1' ) {
 				// The comments module is enabled and the show visibility settings to users option is checked so show the user a warning
 				add_action( 'admin_notices', array($this, 'jetpack_comments_notice') );
+			}
+		}
+
+		/**
+		 * Check if the intense debate plugin is enabled and give a warning if it is
+		 */
+		function intensedebate_check(){
+			// Check to see if the jetpack comments module is enabled and the show visibility settings to users option is checked
+			if ( $this->intensedebate_enabled() ) {
+				// The comments module is enabled and the show visibility settings to users option is checked so show the user a warning
+				add_action( 'admin_notices', array($this, 'intensedebate_notice') );
 			}
 		}
 
@@ -99,6 +121,20 @@
 					The WP Private Comments plugin "Show visibility settings to users" option is currently incompatible with Jetpack Comments.
 					<br>The default you've set will be applied to all future comments
 					<br>You can modify your settings <a href="<?php echo get_admin_url(null, 'options-general.php?page=wp-priviate-comments'); ?>">here</a>
+				</p>
+			</div>
+			<?php
+		}
+
+		/**
+		 * Show the user a warning about the incompatibility with Jetpack Comments
+		 * @return type
+		 */
+		function intensedebate_notice() {
+			?>
+			<div class="error">
+				<p>
+					The WP Private Comments plugin is currently incompatible with the intense debate plugin.
 				</p>
 			</div>
 			<?php
