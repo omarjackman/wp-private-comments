@@ -331,9 +331,10 @@
 		/**
 		 * Filter an array of comment objects and remove comments that should not be visible for the logged in user
 		 * @param array $comments 
+		 * @param array $remove_hidden_comments
 		 * @return array
 		 */
-		function filter_comments($comments, $post_id = null){
+		function filter_comments($comments, $post_id = null, $remove_hidden_comments = null){
 			global $wpdb, $current_user;
 
 			// Check if the logged in user can edit others posts. If they can then that also means they can edit comments belonging to those posts
@@ -417,7 +418,9 @@
 				}
 			}
 			
-			$remove_hidden_comments = get_option('wp-priviate-comments-remove-comments') == '1';
+			if( is_null($remove_hidden_comments) ){
+				$remove_hidden_comments = get_option('wp-priviate-comments-remove-comments') == '1';
+			}
 
 			// Start removing comments along with their children
 			while(count($removed_comments) > 0){
@@ -494,8 +497,12 @@
 		 * @return array
 		 */
 		function the_comments($comments, $wp_comment_query) {
+			
 			$post_id = ($wp_comment_query->query_vars['post_ID']) ? intval($wp_comment_query->query_vars['post_ID']) : null;
-			return $this->filter_comments($comments, $post_id);
+			
+			// Because get_comments is able to be paginated we can only filter the comments without removing them
+			return $this->filter_comments($comments, $post_id, false);
+			
 		}
 
 		/**
