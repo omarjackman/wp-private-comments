@@ -248,9 +248,9 @@
 			// Override the get_visibility_values function so that we can add an extra value which will represent the blog default
 			add_filter( 'WP_PrivateComments::get_visibility_values', array($this, 'get_visibility_values_for_post') );
 			
-			$default_visibility = get_post_meta($post->ID, self::FIELD_PREFIX . 'visibility', true);
-
-			echo $this->get_field_html( $default_visibility ? $default_visibility : "-1");
+			$default_visibility = $this->get_post_visibility_setting($post->ID);
+			
+			echo $this->get_field_html( is_null($default_visibility) ? "-1" : $default_visibility );
 			echo $this->get_nonce();
 
 			// remove the filter we added before since it was only for one time use above
@@ -544,8 +544,8 @@
 			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return $logged_in_as;
 
 			// Get the visibility setting from the post if its been set
-			if($post){
-				$default_visibility = get_post_meta($post->ID, self::FIELD_PREFIX . 'visibility', true);
+			if($post){				
+				$default_visibility = $this->get_post_visibility_setting($post->ID);
 			}
 			else{
 				$default_visibility = null;
@@ -571,7 +571,7 @@
 
 			// Get the visibility setting from the post if its been set
 			if($post){
-				$default_visibility = get_post_meta($post->ID, self::FIELD_PREFIX . 'visibility', true);
+				$default_visibility = $this->get_post_visibility_setting($post->ID);
 			}
 			else{
 				$default_visibility = null;
@@ -579,6 +579,21 @@
 
 			$fields['visibility'] = $this->get_field_html($default_visibility);
 			return $fields;
+		}
+
+		/**
+		 * Get the visibility setting set at the post level
+		 * @param type $post_id 
+		 * @return type
+		 */
+		function get_post_visibility_setting($post_id){
+			// Let get_post_meta return an array because if the meta data doesn't exist it will return a blank string which will conflict with our null case
+			$meta_values = get_post_meta($post_id, self::FIELD_PREFIX . 'visibility');
+
+			if(count($meta_values) > 0){
+				return current($meta_values);
+			}
+			return null;
 		}
 
 		/**
@@ -592,7 +607,7 @@
 			if( is_null($visibility) ) {
 				// Get the visibility setting from the post if its been set
 				if($comment = get_comment($comment_id)){
-					$default_visibility = get_post_meta($comment->comment_post_ID, self::FIELD_PREFIX . 'visibility', true);
+					$default_visibility = $this->get_post_visibility_setting($comment->comment_post_ID);
 				}
 				else{
 					$default_visibility = null;
@@ -676,8 +691,8 @@
 			// Delete the meta data since you don't want blank values
 			delete_post_meta( $post_id, self::FIELD_PREFIX . 'visibility' );
 
-			//Only save the meta data if it is not blank and not set to "Blog Default"
-			if(isset($_POST['visibility']) && !empty($_POST['visibility']) && $_POST['visibility'] != '-1'){
+			//Only save the meta data if it is not set to "Blog Default"
+			if(isset($_POST['visibility']) && $_POST['visibility'] != '-1'){
 				add_post_meta( $post_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($_POST['visibility']) );
 			}
 		}
