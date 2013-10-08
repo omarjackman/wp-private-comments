@@ -9,7 +9,8 @@
 		protected $_comment_counts = array();
 
 
-		const FIELD_PREFIX = 'wp-private-comment-';
+		const OPTION_PREFIX = 'wp-private-comments-';
+		const FIELD_PREFIX =  'wp-private-comments-';
 		const VISIBILITY_EVERYONE = '';
 		const VISIBILITY_POST_AUTHOR = 1;
 		const VISIBILITY_COMMENT_AUTHOR = 2;
@@ -73,6 +74,15 @@
 		}
 
 		/**
+		 * Get an option for this plugin
+		 * @param string $name 
+		 * @return variant
+		 */
+		function get_option($name){
+			return get_option(self::OPTION_PREFIX . $name);
+		}
+
+		/**
 		 * Checks to see if Jetpacks comments is enabled
 		 * @return boolean
 		 */
@@ -93,7 +103,7 @@
 		 */
 		function jetpack_comments_check(){
 			// Check to see if the jetpack comments module is enabled and the show visibility settings to users option is checked
-			if ( $this->jetpack_comments_enabled() && get_option('wp-priviate-comments-show-visbility-settings') == '1' ) {
+			if ( $this->jetpack_comments_enabled() && $this->get_option('show-visbility-settings') == '1' ) {
 				// The comments module is enabled and the show visibility settings to users option is checked so show the user a warning
 				add_action( 'admin_notices', array($this, 'jetpack_comments_notice') );
 			}
@@ -120,7 +130,7 @@
 				<p>
 					The WP Private Comments plugin "Show visibility settings to users" option is currently incompatible with Jetpack Comments.
 					<br>The default you've set will be applied to all future comments
-					<br>You can modify your settings <a href="<?php echo get_admin_url(null, 'options-general.php?page=wp-priviate-comments'); ?>">here</a>
+					<br>You can modify your settings <a href="<?php echo get_admin_url(null, 'options-general.php?page=wp-private-comments'); ?>">here</a>
 				</p>
 			</div>
 			<?php
@@ -144,25 +154,25 @@
 		 * Register all the hooks for creating our options page
 		 */
 		function admin_menu(){
-			add_options_page( 'WP Private Comments', 'WP Private Comments', 'activate_plugins', 'wp-priviate-comments' , array($this, 'add_options_page') );
+			add_options_page( 'WP Private Comments', 'WP Private Comments', 'activate_plugins', 'wp-private-comments' , array($this, 'add_options_page') );
 			
-			add_settings_section( 'wp-priviate-comments-settings-section', '', array($this, 'render_settings_section') , 'wp-priviate-comments' );
+			add_settings_section( 'wp-private-comments-settings-section', '', array($this, 'render_settings_section') , 'wp-private-comments' );
 
 
-			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-visibility-default');
+			register_setting( 'wp-private-comments', 'wp-private-comments-visibility-default');
 			$default_visibility_settings = array(
-				array('type' => 'select', 'name' => 'wp-priviate-comments-visibility-default', 'values' => $this->get_visibility_values(), 'description' => 'Select the default visibility setting for comments on posts and replies to comments.<BR>Note: This can also be overriden for each post'),
+				array('type' => 'select', 'name' => 'wp-private-comments-visibility-default', 'values' => $this->get_visibility_values(), 'description' => 'Select the default visibility setting for comments on posts and replies to comments.<BR>Note: This can also be overriden for each post'),
 			);
-			add_settings_field( 'wp-priviate-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-settings-section', $default_visibility_settings);
+			add_settings_field( 'wp-private-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-private-comments', 'wp-private-comments-settings-section', $default_visibility_settings);
 
 			
-			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-show-visbility-settings', 'intval' );
-			register_setting( 'wp-priviate-comments', 'wp-priviate-comments-remove-comments', 'intval' );
+			register_setting( 'wp-private-comments', 'wp-private-comments-show-visbility-settings', 'intval' );
+			register_setting( 'wp-private-comments', 'wp-private-comments-remove-comments', 'intval' );
 			$admin_default_settings = array(
-				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-show-visbility-settings', 'default' => 'Show visibility settings to users'),
-				array('type' => 'checkbox', 'name' => 'wp-priviate-comments-remove-comments', 'default' => 'Remove hidden comments'),
+				array('type' => 'checkbox', 'name' => 'wp-private-comments-show-visbility-settings', 'default' => 'Show visibility settings to users'),
+				array('type' => 'checkbox', 'name' => 'wp-private-comments-remove-comments', 'default' => 'Remove hidden comments'),
 			);						
-			add_settings_field( 'wp-priviate-comments-settings', __('Settings'), array($this, 'render_setting_fields'), 'wp-priviate-comments', 'wp-priviate-comments-settings-section', $admin_default_settings);
+			add_settings_field( 'wp-private-comments-settings', __('Settings'), array($this, 'render_setting_fields'), 'wp-private-comments', 'wp-private-comments-settings-section', $admin_default_settings);
 
 		}
 
@@ -175,8 +185,8 @@
 			<div class="wrap">
 				<?php screen_icon(); ?><h2><?php _e('WP Private Comments') ?></h2>
 				<form method="post" action="options.php">
-					<?php settings_fields('wp-priviate-comments'); ?>
-					<?php do_settings_sections('wp-priviate-comments'); ?>
+					<?php settings_fields('wp-private-comments'); ?>
+					<?php do_settings_sections('wp-private-comments'); ?>
 					<?php submit_button(); ?>
 				</form>
 			</div>
@@ -283,7 +293,7 @@
 		 * @return string
 		 */
 		function get_default_visiblity(){
-			$default_visibility = get_option('wp-priviate-comments-visibility-default');
+			$default_visibility = $this->get_option('visibility-default');
 			if($default_visibility == null){
 				$default_visibility = self::VISIBILITY_EVERYONE;
 			}
@@ -419,7 +429,7 @@
 			}
 			
 			if( is_null($remove_hidden_comments) ){
-				$remove_hidden_comments = get_option('wp-priviate-comments-remove-comments') == '1';
+				$remove_hidden_comments = $this->get_option('remove-comments') == '1';
 			}
 
 			// Start removing comments along with their children
@@ -541,7 +551,7 @@
 		function comment_form_logged_in($logged_in_as) {
 			global $post;
 
-			if(get_option('wp-priviate-comments-show-visbility-settings') != '1')return $logged_in_as;
+			if($this->get_option('show-visbility-settings') != '1')return $logged_in_as;
 
 			// Get the visibility setting from the post if its been set
 			if($post){				
@@ -550,7 +560,7 @@
 			else{
 				$default_visibility = null;
 			}
-			
+
 			$logged_in_as .= apply_filters( "WP_PrivateComments::comment_form_logged_in", $this->get_field_html($default_visibility) ) . "\n";
 			$logged_in_as .= $this->get_nonce();
 
@@ -565,7 +575,7 @@
 		function comment_form_default_fields( $fields ){
 			global $post;
 
-			if(get_option('wp-priviate-comments-show-visbility-settings') != '1'){
+			if($this->get_option('show-visbility-settings') != '1'){
 				return $fields;
 			}
 
@@ -640,7 +650,7 @@
 				return $comment_id;
 
 			// Check to see if the user was able to override the default setting
-			if(get_option('wp-priviate-comments-show-visbility-settings') == '1'){
+			if($this->get_option('show-visbility-settings') == '1'){
 				
 				// a nonce value is always required so verify it here
 				if(!$this->verify_nonce()){
