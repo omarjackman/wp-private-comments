@@ -437,11 +437,12 @@
 			while(count($removed_comments) > 0){
 				$more_removed_comments = array();
 
-				foreach($removed_comments as $comment_id_to_remove){				
-					foreach($comments as $key => $comment){
-						$comment_id = intval($comment->comment_ID);
-						$comment_parent = intval($comment->comment_parent);
+				foreach($comments as $key => $comment){
+					$comment_id = intval($comment->comment_ID);
+					$comment_parent = intval($comment->comment_parent);
 
+					foreach($removed_comments as $comment_id_to_remove){				
+				
 						if($comment_id === $comment_id_to_remove){
 							//Handle a private comment
 							if($remove_hidden_comments){
