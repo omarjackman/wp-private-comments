@@ -425,7 +425,7 @@
 				}
 
 				if($remove_the_comment){
-					$removed_comments[] = $comment_to_check->comment_ID;
+					$removed_comments[] = intval($comment_to_check->comment_ID);
 				}
 			}
 			
@@ -438,8 +438,9 @@
 				$comment_id_to_remove = array_pop($removed_comments);
 				
 				foreach($comments as $key => $comment){
-					
-					if($comment->comment_ID == $comment_id_to_remove){
+					$comment_id = intval($comment->comment_ID);
+					$comment_parent = intval($comment->comment_parent);
+					if($comment_id === $comment_id_to_remove){
 						//Handle a private comment
 						if($remove_hidden_comments){
 							//Remove comment from the array
@@ -459,7 +460,7 @@
 							$comments[$key]->is_private = true;
 						}
 					}
-					else if($comment->comment_parent == $comment_id_to_remove && $remove_hidden_comments){
+					else if($comment_parent === $comment_id_to_remove && $remove_hidden_comments){
 						// Add child comment to the list of comments to remove so that you don't have orphaned comments
 						array_push($removed_comments, $comment->comment_ID);
 					}
