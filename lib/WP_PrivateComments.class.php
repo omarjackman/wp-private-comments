@@ -92,7 +92,7 @@
 		}
 
 		/**
-		 * Checks to see if Jetpacks comments is enabled
+		 * Checks to see if the Intense Debate plugin is enabled
 		 * @return boolean
 		 */
 		function intensedebate_enabled(){
