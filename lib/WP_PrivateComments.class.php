@@ -461,6 +461,9 @@
 									$comments[$key]->$replacement_key = $replacement_value;
 								}
 								$comments[$key]->is_private = true;
+
+								// exit the loop since you don't need to handle any of the comment children
+								break;
 							}
 						}
 						else if($comment_parent === $comment_id_to_remove && $remove_hidden_comments){
