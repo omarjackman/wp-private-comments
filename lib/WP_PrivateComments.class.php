@@ -36,9 +36,10 @@
 		 */
 		protected function __construct(){
 
-			// Bind actions that will server for saving the visibility preferences
+			// Bind actions that will allow for saving the visibility preferences
 			add_action( 'comment_post', array($this, 'save_visibility_fields') );
 			add_action( 'edit_comment', array($this, 'save_visibility_fields') );
+			add_action( 'wp_insert_comment', array($this, 'save_visibility_fields') );
 
 			// Bind to the save_post action so we can set the default visibility for future comments of the saved post
 			add_action( 'save_post', array($this, 'save_visibility_fields_for_post') );
