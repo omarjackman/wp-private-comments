@@ -435,36 +435,41 @@
 
 			// Start removing comments along with their children
 			while(count($removed_comments) > 0){
-				$comment_id_to_remove = array_pop($removed_comments);
-				
-				foreach($comments as $key => $comment){
-					$comment_id = intval($comment->comment_ID);
-					$comment_parent = intval($comment->comment_parent);
-					if($comment_id === $comment_id_to_remove){
-						//Handle a private comment
-						if($remove_hidden_comments){
-							//Remove comment from the array
-							unset($comments[$key]);
-						}
-						else{
-							//Change the comment text to a message
-							$replacements = apply_filters('WP_PrivateComments::private::replacements', array(
-								'comment_content' => '<i>This is a private comment.</i>',
-								'comment_author' => 'private',
-								'comment_author_email' => 'private',
-							), $comments[$key]);
+				$more_removed_comments = array();
 
-							foreach($replacements as $replacement_key => $replacement_value){
-								$comments[$key]->$replacement_key = $replacement_value;
+				foreach($removed_comments as $comment_id_to_remove){				
+					foreach($comments as $key => $comment){
+						$comment_id = intval($comment->comment_ID);
+						$comment_parent = intval($comment->comment_parent);
+
+						if($comment_id === $comment_id_to_remove){
+							//Handle a private comment
+							if($remove_hidden_comments){
+								//Remove comment from the array
+								unset($comments[$key]);
 							}
-							$comments[$key]->is_private = true;
+							else{
+								//Change the comment text to a message
+								$replacements = apply_filters('WP_PrivateComments::private::replacements', array(
+									'comment_content' => '<i>This is a private comment.</i>',
+									'comment_author' => 'private',
+									'comment_author_email' => 'private',
+								), $comments[$key]);
+
+								foreach($replacements as $replacement_key => $replacement_value){
+									$comments[$key]->$replacement_key = $replacement_value;
+								}
+								$comments[$key]->is_private = true;
+							}
 						}
-					}
-					else if($comment_parent === $comment_id_to_remove && $remove_hidden_comments){
-						// Add child comment to the list of comments to remove so that you don't have orphaned comments
-						array_push($removed_comments, $comment->comment_ID);
+						else if($comment_parent === $comment_id_to_remove && $remove_hidden_comments){
+							// Add child comment to the list of comments to remove so that you don't have orphaned comments
+							$more_removed_comments[] = $comment_id;
+						}
 					}
 				}
+
+				$removed_comments = $more_removed_comments;
 			}
 
 			if($post_id){
