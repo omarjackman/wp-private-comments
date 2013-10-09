@@ -437,10 +437,12 @@
 			while(count($removed_comments) > 0){
 				$more_removed_comments = array();
 
+				// Iterate over all of the remaining comments in the list
 				foreach($comments as $key => $comment){
 					$comment_id = intval($comment->comment_ID);
 					$comment_parent = intval($comment->comment_parent);
 
+					// Iterate over all comment ids that need to be removed from the list
 					foreach($removed_comments as $comment_id_to_remove){				
 				
 						if($comment_id === $comment_id_to_remove){
