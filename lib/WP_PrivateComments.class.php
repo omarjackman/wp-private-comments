@@ -452,7 +452,7 @@
 								unset($comments[$key]);
 							}
 							else{
-								//Change the comment text to a message
+								// Alter the comment so that it shows "Private" as the content and also allow other plugin developers to override this
 								$replacements = apply_filters('WP_PrivateComments::private::replacements', array(
 									'comment_content' => '<i>This is a private comment.</i>',
 									'comment_author' => 'private',
