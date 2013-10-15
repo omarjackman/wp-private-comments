@@ -404,13 +404,14 @@
 			 * author. It assumes your not since you aren't logged in.
 			 */
 			$sql = $wpdb->prepare( "
-				SELECT comment.comment_ID, meta.meta_value, post.post_author, comment.comment_author, comment.comment_author_email, comment.user_id, comment_parent.comment_author `parent_comment_author`, comment_parent.comment_author_email `parent_comment_author_email`, comment_parent.user_id `parent_comment_user_id`
+				SELECT comment.comment_ID, meta.meta_value, post.post_author, comment.comment_author, comment.comment_author_email, comment.user_id, comment_parent.comment_ID `parent_comment_ID`, comment_parent.comment_author `parent_comment_author`, comment_parent.comment_author_email `parent_comment_author_email`, comment_parent.user_id `parent_comment_user_id`
 					FROM {$wpdb->comments} comment
 						INNER JOIN {$wpdb->commentmeta} meta ON meta.comment_id = comment.comment_ID AND meta.meta_key = %s
 						INNER JOIN {$wpdb->posts} post ON post.ID = comment.comment_post_ID
 						LEFT OUTER JOIN {$wpdb->comments} comment_parent ON comment_parent.comment_ID = comment.comment_parent
 				WHERE comment.comment_ID IN ({$comment_ids})", self::FIELD_PREFIX . 'visibility' );
 			$comments_to_check = $wpdb->get_results( $sql );
+
 
 			$removed_comments = array();
 
@@ -433,7 +434,8 @@
 						$remove_the_comment = false;
 					}
 
-					if ( self::VISIBILITY_COMMENT_AUTHOR == $comment_to_check->meta_value ) {
+					// Check if the visibility is set to the parent comment author and if the current comment has a parent
+					if ( self::VISIBILITY_COMMENT_AUTHOR == $comment_to_check->meta_value && ! is_null($comment_to_check->parent_comment_ID) ) {
 
 						// Is the current anonymous user the author of the parent comment
 						if ( $comment_to_check->parent_comment_author == $comment_author && $comment_to_check->parent_comment_author_email == $comment_author_email ) {
