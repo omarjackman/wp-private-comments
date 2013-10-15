@@ -314,7 +314,7 @@
 		 */
 		function get_default_visiblity(){
 			$default_visibility = $this->get_option( 'visibility-default' );
-			if( $default_visibility == null ){
+			if( null == $default_visibility ){
 				$default_visibility = self::VISIBILITY_EVERYONE;
 			}
 			return $default_visibility;
@@ -368,7 +368,7 @@
 			global $wpdb, $current_user;
 
 			// Check if the logged in user can edit others posts. If they can then that also means they can edit comments belonging to those posts
-			if(current_user_can( 'edit_others_posts' )){
+			if( current_user_can( 'edit_others_posts' ) ){
 				// Don't filter out any comments
 				return $comments;
 			}
@@ -419,7 +419,7 @@
 				$remove_the_comment = true;
 
 				//Check if the current user is the author of the comment or the post
-				if( $current_user_id != 0 ){
+				if( 0 != $current_user_id ){
 					// Is the current logged in user the post author or the comment author
 					if( $comment_to_check->post_author == $current_user_id || $comment_to_check->user_id == $current_user_id ){
 						//dont hide the comment
@@ -433,7 +433,7 @@
 						$remove_the_comment = false;
 					}
 
-					if( $comment_to_check->meta_value == self::VISIBILITY_COMMENT_AUTHOR ){
+					if( self::VISIBILITY_COMMENT_AUTHOR == $comment_to_check->meta_value ){
 
 						// Is the current anonymous user the author of the parent comment
 						if( $comment_to_check->parent_comment_author == $comment_author && $comment_to_check->parent_comment_author_email == $comment_author_email ){
@@ -584,7 +584,7 @@
 		function comment_form_logged_in( $logged_in_as ) {
 			global $post;
 
-			if( $this->get_option( 'show-visbility-settings' ) != '1' )return $logged_in_as;
+			if( '1' != $this->get_option( 'show-visbility-settings' ) )return $logged_in_as;
 
 			// Get the visibility setting from the post if its been set
 			if( $post ){				
@@ -608,7 +608,7 @@
 		function comment_form_default_fields( $fields ){
 			global $post;
 
-			if( $this->get_option( 'show-visbility-settings' ) != '1' ){
+			if( '1' != $this->get_option( 'show-visbility-settings' ) ){
 				return $fields;
 			}
 
@@ -683,7 +683,7 @@
 				return $comment_id;
 
 			// Check to see if the user was able to override the default setting
-			if( $this->get_option( 'show-visbility-settings' ) == '1' ){
+			if( '1' == $this->get_option( 'show-visbility-settings' ) ){
 				
 				// a nonce value is always required so verify it here
 				if( ! $this->verify_nonce() ){
@@ -735,7 +735,7 @@
 			delete_post_meta( $post_id, self::FIELD_PREFIX . 'visibility' );
 
 			//Only save the meta data if it is not set to "Blog Default"
-			if( isset( $_POST['visibility'] ) && $_POST['visibility'] != '-1' ){
+			if( isset( $_POST['visibility'] ) && '1' != $_POST['visibility'] ){
 				add_post_meta( $post_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field( $_POST['visibility'] ) );
 			}
 		}
