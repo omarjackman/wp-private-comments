@@ -23,7 +23,7 @@
 		 * @return WP_PrivateComments
 		 */
 		public static function getInstance(){
-			if(!self::$_instance){
+			if( ! self::$_instance ){
 				self::$_instance = new WP_PrivateComments();
 			}
 			else{
@@ -37,41 +37,41 @@
 		protected function __construct(){
 
 			// Bind actions that will allow for saving the visibility preferences
-			add_action( 'comment_post', array($this, 'save_visibility_fields') );
-			add_action( 'edit_comment', array($this, 'save_visibility_fields') );
-			add_action( 'wp_insert_comment', array($this, 'save_visibility_fields') );
+			add_action( 'comment_post', array( $this, 'save_visibility_fields' ) );
+			add_action( 'edit_comment', array( $this, 'save_visibility_fields' ) );
+			add_action( 'wp_insert_comment', array( $this, 'save_visibility_fields' ) );
 
 			// Bind to the save_post action so we can set the default visibility for future comments of the saved post
-			add_action( 'save_post', array($this, 'save_visibility_fields_for_post') );
+			add_action( 'save_post', array( $this, 'save_visibility_fields_for_post' ) );
 			 
 			// Bind filters that will server for loading the visibility fields into the necessary forms
-			add_filter( 'comment_form_default_fields', array($this, 'comment_form_default_fields') );
-			add_filter( 'comment_form_logged_in', array($this, 'comment_form_logged_in') );
+			add_filter( 'comment_form_default_fields', array( $this, 'comment_form_default_fields' ) );
+			add_filter( 'comment_form_logged_in', array( $this, 'comment_form_logged_in' ) );
 
 			// Bind filters that will filter out comments that shouldn't be visible for the current user
-			add_filter( 'comments_array', array($this, 'comments_array'), 10, 2 );
-			add_filter( 'the_comments', array($this, 'the_comments'), 10, 2 );
+			add_filter( 'comments_array', array( $this, 'comments_array' ), 10, 2 );
+			add_filter( 'the_comments', array( $this, 'the_comments' ), 10, 2 );
 
 			// Bind to wp in order to remove hidden comments from feeds and other pages that might include comments on them
-			add_action( 'wp', array($this, 'filter_wp_query') );
+			add_action( 'wp', array( $this, 'filter_wp_query' ) );
 
 			// Bind to the comment reply filter so that users cant reply to comments that are private
-			add_filter( 'comment_reply_link', array($this, 'comment_reply_link'), 10, 4 );
+			add_filter( 'comment_reply_link', array( $this, 'comment_reply_link' ), 10, 4 );
 
 			// Bind filter that will override the comment count shown in themes
-			add_filter( 'get_comments_number', array($this, 'get_comments_number'), 10, 2 );
+			add_filter( 'get_comments_number', array( $this, 'get_comments_number' ), 10, 2 );
 			
 			// Bind action that will add the visibility settings to the metaboxes area of the edit comment page
-			add_action( 'add_meta_boxes', array($this, 'add_meta_boxes') );
+			add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 
 			// Bind to the admin menu so that we can have an options page
-			add_action( 'admin_menu', array($this, 'admin_menu') );
+			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 
 			// Bind to the admin_init action so that we can do a check for jetpack
-			add_action( 'admin_init', array($this, 'jetpack_comments_check') );
+			add_action( 'admin_init', array( $this, 'jetpack_comments_check' ) );
 
 			// Bind to the admin_init action so that we can do a check for intense debate
-			add_action( 'admin_init', array($this, 'intensedebate_check') );
+			add_action( 'admin_init', array( $this, 'intensedebate_check' ) );
 		}
 
 		/**
@@ -79,8 +79,8 @@
 		 * @param string $name 
 		 * @return variant
 		 */
-		function get_option($name){
-			return get_option(self::OPTION_PREFIX . $name);
+		function get_option( $name ){
+			return get_option( self::OPTION_PREFIX . $name );
 		}
 
 		/**
@@ -88,7 +88,7 @@
 		 * @return boolean
 		 */
 		function jetpack_comments_enabled(){
-			return class_exists('Jetpack') && in_array('comments', Jetpack::get_active_modules());
+			return class_exists( 'Jetpack' ) && in_array( 'comments', Jetpack::get_active_modules() );
 		}
 
 		/**
@@ -96,7 +96,7 @@
 		 * @return boolean
 		 */
 		function intensedebate_enabled(){
-			return defined('ID_PLUGIN_VERSION');
+			return defined( 'ID_PLUGIN_VERSION' );
 		}
 
 		/**
@@ -104,9 +104,9 @@
 		 */
 		function jetpack_comments_check(){
 			// Check to see if the jetpack comments module is enabled and the show visibility settings to users option is checked
-			if ( $this->jetpack_comments_enabled() && $this->get_option('show-visbility-settings') == '1' ) {
+			if ( $this->jetpack_comments_enabled() && $this->get_option( 'show-visbility-settings' ) == '1' ) {
 				// The comments module is enabled and the show visibility settings to users option is checked so show the user a warning
-				add_action( 'admin_notices', array($this, 'jetpack_comments_notice') );
+				add_action( 'admin_notices', array( $this, 'jetpack_comments_notice' ) );
 			}
 		}
 
@@ -117,7 +117,7 @@
 			// Check to see if the intense debate plugin is enable
 			if ( $this->intensedebate_enabled() ) {
 				// The plugin is enabled so show the user a warning
-				add_action( 'admin_notices', array($this, 'intensedebate_notice') );
+				add_action( 'admin_notices', array( $this, 'intensedebate_notice' ) );
 			}
 		}
 
@@ -131,7 +131,7 @@
 				<p>
 					The WP Private Comments plugin "Show visibility settings to users" option is currently incompatible with Jetpack Comments.
 					<br>The default you've set will be applied to all future comments
-					<br>You can modify your settings <a href="<?php echo get_admin_url(null, 'options-general.php?page=wp-private-comments'); ?>">here</a>
+					<br>You can modify your settings <a href="<?php echo get_admin_url(null, 'options-general.php?page=wp-private-comments' ); ?>">here</a>
 				</p>
 			</div>
 			<?php
@@ -155,12 +155,12 @@
 		 * Register all the hooks for creating our options page
 		 */
 		function admin_menu(){
-			add_options_page( 'WP Private Comments', 'WP Private Comments', 'activate_plugins', 'wp-private-comments' , array($this, 'add_options_page') );
+			add_options_page( 'WP Private Comments', 'WP Private Comments', 'activate_plugins', 'wp-private-comments' , array( $this, 'add_options_page' ) );
 			
-			add_settings_section( 'wp-private-comments-settings-section', '', array($this, 'render_settings_section') , 'wp-private-comments' );
+			add_settings_section( 'wp-private-comments-settings-section', '', array( $this, 'render_settings_section' ) , 'wp-private-comments' );
 
 
-			register_setting( 'wp-private-comments', 'wp-private-comments-visibility-default');
+			register_setting( 'wp-private-comments', 'wp-private-comments-visibility-default' );
 
 			$default_visibility_settings = array(
 				array(
@@ -170,7 +170,7 @@
 					'description' => 'Select the default visibility setting for comments on posts and replies to comments.<BR>Note: This can also be overriden for each post',
 				),
 			);
-			add_settings_field( 'wp-private-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-private-comments', 'wp-private-comments-settings-section', $default_visibility_settings);
+			add_settings_field( 'wp-private-comments-visibility-defaults', __( 'Visibility Default' ), array( $this, 'render_setting_fields' ), 'wp-private-comments', 'wp-private-comments-settings-section', $default_visibility_settings);
 
 			
 			register_setting( 'wp-private-comments', 'wp-private-comments-show-visbility-settings', 'intval' );
@@ -189,7 +189,7 @@
 				),
 			);		
 
-			add_settings_field( 'wp-private-comments-settings', __('Settings'), array($this, 'render_setting_fields'), 'wp-private-comments', 'wp-private-comments-settings-section', $admin_default_settings);
+			add_settings_field( 'wp-private-comments-settings', __( 'Settings' ), array( $this, 'render_setting_fields' ), 'wp-private-comments', 'wp-private-comments-settings-section', $admin_default_settings);
 
 		}
 
@@ -200,10 +200,10 @@
 			
 			?>
 			<div class="wrap">
-				<?php screen_icon(); ?><h2><?php _e('WP Private Comments') ?></h2>
+				<?php screen_icon(); ?><h2><?php _e( 'WP Private Comments' ) ?></h2>
 				<form method="post" action="options.php">
-					<?php settings_fields('wp-private-comments'); ?>
-					<?php do_settings_sections('wp-private-comments'); ?>
+					<?php settings_fields( 'wp-private-comments' ); ?>
+					<?php do_settings_sections( 'wp-private-comments' ); ?>
 					<?php submit_button(); ?>
 				</form>
 			</div>
@@ -213,36 +213,36 @@
 		/**
 		 * Add the settings table for our options page
 		 */
-		function render_settings_section($args){
+		function render_settings_section( $args ){
 			// Do nothing
 		}
 
 		/**
 		 * Add the fields to our settings table
 		 */
-		function render_setting_fields($options){	
+		function render_setting_fields( $options ){	
 			?>
 				<fieldset>
-					<legend class="screen-reader-text"><span><?php _e($args['label']); ?></span></legend>
-					<?php foreach($options as $option): ?>
-					<?php 		if ($option['type'] == 'checkbox'): ?>
-					<label for="<?php echo $option['name'] ?>"><input type="checkbox" name="<?php echo $option['name'] ?>" id="<?php echo $option['name'] ?>" value="1" <?php checked('1', get_option($option['name'])); ?> /> <?php _e($option['default']); ?></label><br>
-					<?php 		elseif ($option['type'] == 'select'): ?>
+					<legend class="screen-reader-text"><span><?php _e( $args['label'] ); ?></span></legend>
+					<?php foreach( $options as $option ): ?>
+					<?php 		if ( $option['type'] == 'checkbox' ): ?>
+					<label for="<?php echo $option['name'] ?>"><input type="checkbox" name="<?php echo $option['name'] ?>" id="<?php echo $option['name'] ?>" value="1" <?php checked( '1', get_option( $option['name'] ) ); ?> /> <?php _e( $option['default'] ); ?></label><br>
+					<?php 		elseif ( $option['type'] == 'select' ): ?>
 					<select name="<?php echo $option['name'] ?>" id="<?php echo $option['name'] ?>">
 					<?php
-									$selected_value = get_option($option['name']);
-									foreach($option['values'] as $title => $value){
-										if($selected_value == $value){
-											echo '<option value="' . esc_html($value) . '" selected>' . esc_html__($title);
+									$selected_value = get_option( $option['name'] );
+									foreach( $option['values'] as $title => $value ){
+										if( $selected_value == $value ){
+											echo '<option value="' . esc_html( $value ) . '" selected>' . esc_html__( $title );
 										}
 										else{
-											echo '<option value="' . esc_html($value) . '">' . esc_html__($title);
+											echo '<option value="' . esc_html( $value ) . '">' . esc_html__( $title );
 										}
 									}
 					?>
 					</select><br>
 					<?php 		endif; ?>
-					<?php 		if(isset($option['description'])):?>
+					<?php 		if( isset( $option['description'] ) ):?>
 					<p class="description"><?php echo $option['description'] ?></p>
 					<?php 		endif; ?>
 					<?php endforeach;?>
@@ -254,8 +254,8 @@
 		 * Add our meta box to the comments page
 		 */
 		function add_meta_boxes(){
-			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array($this, 'comment_meta_box'), 'comment', 'normal');
-			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array($this, 'post_meta_box'), 'post', 'normal');
+			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array( $this, 'comment_meta_box' ), 'comment', 'normal' );
+			add_meta_box( 'wp-private-comment', __( 'Comment Visibility' ), array( $this, 'post_meta_box' ), 'post', 'normal' );
 		}
 
 		/**
@@ -263,7 +263,7 @@
 		 * @param object $comment 
 		 */
 		function comment_meta_box( $comment ){
-			echo $this->get_field_html( get_comment_meta($comment->comment_ID, self::FIELD_PREFIX . 'visibility', true) );
+			echo $this->get_field_html( get_comment_meta( $comment->comment_ID, self::FIELD_PREFIX . 'visibility', true ) );
 			echo $this->get_nonce();
 		}
 
@@ -273,15 +273,15 @@
 		 */
 		function post_meta_box( $post ){
 			// Override the get_visibility_values function so that we can add an extra value which will represent the blog default
-			add_filter( 'WP_PrivateComments::get_visibility_values', array($this, 'get_visibility_values_for_post') );
+			add_filter( 'WP_PrivateComments::get_visibility_values', array( $this, 'get_visibility_values_for_post' ) );
 			
-			$default_visibility = $this->get_post_visibility_setting($post->ID);
+			$default_visibility = $this->get_post_visibility_setting( $post->ID );
 			
-			echo $this->get_field_html( is_null($default_visibility) ? "-1" : $default_visibility );
+			echo $this->get_field_html( is_null( $default_visibility)  ? "-1" : $default_visibility );
 			echo $this->get_nonce();
 
 			// remove the filter we added before since it was only for one time use above
-			remove_filter( 'WP_PrivateComments::get_visibility_values', array($this, 'get_visibility_values_for_post') );
+			remove_filter( 'WP_PrivateComments::get_visibility_values', array( $this, 'get_visibility_values_for_post' ) );
 		}
 
 		/**
@@ -289,11 +289,11 @@
 		 * @param array $values 
 		 * @return array
 		 */
-		function get_visibility_values_for_post($values){
+		function get_visibility_values_for_post( $values ){
 			$extra_values = array(
 				'-- Blog Default --' => -1,
 			);
-			return array_merge($extra_values, $values);
+			return array_merge( $extra_values, $values );
 		}
 
 		/**
@@ -301,11 +301,11 @@
 		 * @return array
 		 */
 		function get_visibility_values(){
-			return apply_filters('WP_PrivateComments::get_visibility_values', array(
+			return apply_filters( 'WP_PrivateComments::get_visibility_values', array(
 				'Everyone' => self::VISIBILITY_EVERYONE,
 				'Post author' => self::VISIBILITY_POST_AUTHOR,
 				'Post author and comment author' => self::VISIBILITY_COMMENT_AUTHOR,
-			));
+			) );
 		}
 
 		/**
@@ -313,8 +313,8 @@
 		 * @return string
 		 */
 		function get_default_visiblity(){
-			$default_visibility = $this->get_option('visibility-default');
-			if($default_visibility == null){
+			$default_visibility = $this->get_option( 'visibility-default' );
+			if( $default_visibility == null ){
 				$default_visibility = self::VISIBILITY_EVERYONE;
 			}
 			return $default_visibility;
@@ -324,25 +324,25 @@
 		 * Get the html for the visibility field that will be placed on a comment form
 		 * @return array
 		 */
-		function get_field_html($selected_visibility_value = null){
+		function get_field_html( $selected_visibility_value = null ){
 			
 			$visibility_values = $this->get_visibility_values();
 
-			if( is_null($selected_visibility_value) ){
+			if( is_null( $selected_visibility_value ) ){
 				$selected_visibility_value = $this->get_default_visiblity();
 			}
 
 			$options = '';
-			foreach($visibility_values as $visibility_value_title => $visibility_value){
-				if($selected_visibility_value == $visibility_value){
-					$options .= '<option value="' . esc_html($visibility_value) . '" selected>' . esc_html__($visibility_value_title);
+			foreach( $visibility_values as $visibility_value_title => $visibility_value ){
+				if( $selected_visibility_value == $visibility_value ){
+					$options .= '<option value="' . esc_html( $visibility_value ) . '" selected>' . esc_html__( $visibility_value_title );
 				}
 				else{
-					$options .= '<option value="' . esc_html($visibility_value) . '">' . esc_html__($visibility_value_title);
+					$options .= '<option value="' . esc_html( $visibility_value ) . '">' . esc_html__( $visibility_value_title );
 				}
 			}
 
-			return apply_filters('WP_PrivateComments::get_field_html', '<p class="comment-form-visibility"><label for="visibility" style="padding-right:15px">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>', $comment_id);
+			return apply_filters( 'WP_PrivateComments::get_field_html', '<p class="comment-form-visibility"><label for="visibility" style="padding-right:15px">' . __( 'Visibility' ) . '</label><select id="visibility" name="visibility"/>' . $options . '</select>', $comment_id );
 		}
 
 		/**
@@ -351,9 +351,9 @@
 		 * @param int $post_id 
 		 * @return int
 		 */
-		function get_comments_number($count, $post_id){
-			if(isset($this->_comment_counts[$post_id]))
-				return $this->_comment_counts[$post_id];
+		function get_comments_number( $count, $post_id ){
+			if( isset( $this->_comment_counts[ $post_id ] ) )
+				return $this->_comment_counts[ $post_id ];
 			else
 				return $count;
 		}
@@ -364,11 +364,11 @@
 		 * @param array $remove_hidden_comments
 		 * @return array
 		 */
-		function filter_comments($comments, $post_id = null, $remove_hidden_comments = null){
+		function filter_comments( $comments, $post_id = null, $remove_hidden_comments = null ){
 			global $wpdb, $current_user;
 
 			// Check if the logged in user can edit others posts. If they can then that also means they can edit comments belonging to those posts
-			if(current_user_can('edit_others_posts')){
+			if(current_user_can( 'edit_others_posts' )){
 				// Don't filter out any comments
 				return $comments;
 			}
@@ -378,15 +378,15 @@
 			
 			$comment_ids = array();
 			
-			foreach($comments as $comment){
-				$comment_ids[] = intval($comment->comment_ID);
+			foreach( $comments as $comment ){
+				$comment_ids[] = intval( $comment->comment_ID );
 			}
 
 			// Create a list of the comment ids for use in SQL
-			$comment_ids = implode(',', $comment_ids);
+			$comment_ids = implode( ',', $comment_ids );
 
 			// Get the currently logged in user
-			$current_user_id = intval($current_user->ID);
+			$current_user_id = intval( $current_user->ID );
 
 			// Get the commenter cookie info just incase the user is an Anonymous user who isn't logged in.
 			$commenter = wp_get_current_commenter();
@@ -394,8 +394,8 @@
 			$comment_author_email = $commenter['comment_author_email'];
 
 			// Get the visibility settings values for use in the SQL query below
-			$visibility_post_author = intval(self::VISIBILITY_POST_AUTHOR);
-			$visibility_comment_author = intval(self::VISIBILITY_COMMENT_AUTHOR);
+			$visibility_post_author = intval( self::VISIBILITY_POST_AUTHOR );
+			$visibility_comment_author = intval( self::VISIBILITY_COMMENT_AUTHOR );
 
 			// Generate the SQL that will return comments that should be inspected and filtered out if needed
 			
@@ -403,63 +403,63 @@
 			 * The query for the logged out user doesn't need to join on the posts table because it doesn't need to check if you are the post 
 			 * author. It assumes your not since you aren't logged in.
 			 */
-			$sql = $wpdb->prepare("
+			$sql = $wpdb->prepare( "
 				select comment.comment_ID, meta.meta_value, post.post_author, comment.comment_author, comment.comment_author_email, comment.user_id, comment_parent.comment_author `parent_comment_author`, comment_parent.comment_author_email `parent_comment_author_email`, comment_parent.user_id `parent_comment_user_id`
 					from {$wpdb->comments} comment
 						inner join {$wpdb->commentmeta} meta on meta.comment_id = comment.comment_ID and meta.meta_key = %s
 						inner join {$wpdb->posts} post on post.ID = comment.comment_post_ID
 						left outer join {$wpdb->comments} comment_parent on comment_parent.comment_ID = comment.comment_parent
-				where comment.comment_ID in ({$comment_ids})", self::FIELD_PREFIX . 'visibility');
-			$comments_to_check = $wpdb->get_results($sql);
+				where comment.comment_ID in ({$comment_ids})", self::FIELD_PREFIX . 'visibility' );
+			$comments_to_check = $wpdb->get_results( $sql );
 
 			$removed_comments = array();
 
-			foreach($comments_to_check as $comment_to_check){
+			foreach( $comments_to_check as $comment_to_check ){
 
 				$remove_the_comment = true;
 
 				//Check if the current user is the author of the comment or the post
-				if($current_user_id != 0){
+				if( $current_user_id != 0 ){
 					// Is the current logged in user the post author or the comment author
-					if($comment_to_check->post_author == $current_user_id || $comment_to_check->user_id == $current_user_id){
+					if( $comment_to_check->post_author == $current_user_id || $comment_to_check->user_id == $current_user_id ){
 						//dont hide the comment
 						$remove_the_comment = false;
 					}
 				}
 				else{
 					// Is the current anonymous user the author of the comment
-					if($comment_to_check->comment_author == $comment_author && $comment_to_check->comment_author_email == $comment_author_email){
+					if( $comment_to_check->comment_author == $comment_author && $comment_to_check->comment_author_email == $comment_author_email ){
 						//dont hide the comment
 						$remove_the_comment = false;
 					}
 
-					if($comment_to_check->meta_value == self::VISIBILITY_COMMENT_AUTHOR){
+					if( $comment_to_check->meta_value == self::VISIBILITY_COMMENT_AUTHOR ){
 
 						// Is the current anonymous user the author of the parent comment
-						if($comment_to_check->parent_comment_author == $comment_author && $comment_to_check->parent_comment_author_email == $comment_author_email){
+						if( $comment_to_check->parent_comment_author == $comment_author && $comment_to_check->parent_comment_author_email == $comment_author_email ){
 							//dont hide the comment
 							$remove_the_comment = false;
 						}
 					}
 				}
 
-				if($remove_the_comment){
-					$removed_comments[] = intval($comment_to_check->comment_ID);
+				if( $remove_the_comment ){
+					$removed_comments[] = intval( $comment_to_check->comment_ID );
 				}
 			}
 			
-			if( is_null($remove_hidden_comments) ){
-				$remove_hidden_comments = $this->get_option('remove-comments') == '1';
+			if( is_null( $remove_hidden_comments ) ){
+				$remove_hidden_comments = $this->get_option( 'remove-comments' ) == '1';
 			}
 
 			// Start removing comments along with their children
-			while( count($removed_comments) > 0 ){
+			while( count( $removed_comments ) > 0 ){
 				$more_removed_comments = array();
 
 				// Iterate over all of the remaining comments in the list
 				foreach( $comments as $key => $comment ){
-					$comment_id = intval($comment->comment_ID);
-					$comment_parent = intval($comment->comment_parent);
+					$comment_id = intval( $comment->comment_ID );
+					$comment_parent = intval( $comment->comment_parent );
 
 					// Iterate over all comment ids that need to be removed from the list
 					foreach( $removed_comments as $comment_id_to_remove ){				
@@ -468,20 +468,20 @@
 							//Handle a private comment
 							if( $remove_hidden_comments ){
 								//Remove comment from the array
-								unset($comments[$key]);
+								unset( $comments[ $key ] );
 							}
 							else{
 								// Alter the comment so that it shows "Private" as the content and also allow other plugin developers to override this
-								$replacements = apply_filters('WP_PrivateComments::private::replacements', array(
+								$replacements = apply_filters( 'WP_PrivateComments::private::replacements', array(
 									'comment_content' => '<i>This is a private comment.</i>',
 									'comment_author' => 'private',
 									'comment_author_email' => 'private',
-								), $comments[$key]);
+								), $comments[ $key ] );
 
 								foreach( $replacements as $replacement_key => $replacement_value ){
-									$comments[$key]->$replacement_key = $replacement_value;
+									$comments[ $key ]->$replacement_key = $replacement_value;
 								}
-								$comments[$key]->is_private = true;
+								$comments[ $key ]->is_private = true;
 
 								// exit the loop since you don't need to handle any of the comment children
 								break;
@@ -498,13 +498,13 @@
 				$removed_comments = $more_removed_comments;
 			}
 
-			if($post_id){
+			if( $post_id ){
 				// Cache the comment count for later use 
-				$this->_comment_counts[$post_id] = count($comments);
+				$this->_comment_counts[ $post_id ] = count( $comments );
 			}
 
 			//Normalize the array keys since some might have been removed and return the altered list of comments
-			return array_values($comments);
+			return array_values( $comments );
 		}
 
 		/**
@@ -512,7 +512,7 @@
 		 * @return string
 		 */
 		function get_nonce(){
-			return wp_nonce_field('wp-private-comments-savedata', self::FIELD_PREFIX . 'NONCE', true, false);
+			return wp_nonce_field( 'wp-private-comments-savedata', self::FIELD_PREFIX . 'NONCE', true, false );
 		}
 
 		/**
@@ -520,7 +520,7 @@
 		 * @return boolean
 		 */
 		function verify_nonce(){
-			return wp_verify_nonce($_POST[self::FIELD_PREFIX . 'NONCE'], 'wp-private-comments-savedata');
+			return wp_verify_nonce( $_POST[ self::FIELD_PREFIX . 'NONCE' ], 'wp-private-comments-savedata' );
 		}
 
 		/**
@@ -529,8 +529,8 @@
 		 * @param int $post_id 
 		 * @return array
 		 */
-		function comments_array($comments, $post_id) {
-			return $this->filter_comments($comments, $post_id);
+		function comments_array( $comments, $post_id ) {
+			return $this->filter_comments( $comments, $post_id );
 		}
 
 		/**
@@ -539,12 +539,12 @@
 		 * @param object $wp_comment_query 
 		 * @return array
 		 */
-		function the_comments($comments, $wp_comment_query) {
+		function the_comments( $comments, $wp_comment_query ) {
 			
-			$post_id = ($wp_comment_query->query_vars['post_ID']) ? intval($wp_comment_query->query_vars['post_ID']) : null;
+			$post_id = ( $wp_comment_query->query_vars['post_ID'] ) ? intval( $wp_comment_query->query_vars['post_ID'] ) : null;
 			
 			// Because get_comments is able to be paginated we can only filter the comments without removing them
-			return $this->filter_comments($comments, $post_id, false);
+			return $this->filter_comments( $comments, $post_id, false );
 			
 		}
 
@@ -552,15 +552,15 @@
 		 * Remove comments frorm the $wp_query object
 		 * @param object $wp 
 		 */
-		function filter_wp_query($wp){
+		function filter_wp_query( $wp ){
 			global $wp_query;
 			
-			if(is_array($wp_query->comments) && count($wp_query->comments) > 0){
+			if( is_array( $wp_query->comments ) && count( $wp_query->comments ) > 0 ){
 				//Filter the comments array in $wp_query if it exists
-				$wp_query->comments = $this->filter_comments($wp_query->comments);
+				$wp_query->comments = $this->filter_comments( $wp_query->comments );
 
 				//Update the comment count just incase comments are removed during the filter
-				$wp_query->comment_count = count($wp_query->comments);
+				$wp_query->comment_count = count( $wp_query->comments );
 			}
 		}
 
@@ -572,8 +572,8 @@
 		 * @param object $post 
 		 * @return type
 		 */
-		function comment_reply_link($link, $args, $comment, $post){
-			return (isset($comment->is_private) && $comment->is_private) ? false : $link;
+		function comment_reply_link( $link, $args, $comment, $post ){
+			return ( isset( $comment->is_private ) && $comment->is_private ) ? false : $link;
 		}
 
 		/**
@@ -581,20 +581,20 @@
 		 * @param string $logged_in_as 
 		 * @return string
 		 */
-		function comment_form_logged_in($logged_in_as) {
+		function comment_form_logged_in( $logged_in_as ) {
 			global $post;
 
-			if($this->get_option('show-visbility-settings') != '1')return $logged_in_as;
+			if( $this->get_option( 'show-visbility-settings' ) != '1' )return $logged_in_as;
 
 			// Get the visibility setting from the post if its been set
-			if($post){				
-				$default_visibility = $this->get_post_visibility_setting($post->ID);
+			if( $post ){				
+				$default_visibility = $this->get_post_visibility_setting( $post->ID );
 			}
 			else{
 				$default_visibility = null;
 			}
 
-			$logged_in_as .= apply_filters( "WP_PrivateComments::comment_form_logged_in", $this->get_field_html($default_visibility) ) . "\n";
+			$logged_in_as .= apply_filters( "WP_PrivateComments::comment_form_logged_in", $this->get_field_html( $default_visibility ) ) . "\n";
 			$logged_in_as .= $this->get_nonce();
 
 			return $logged_in_as;
@@ -608,19 +608,19 @@
 		function comment_form_default_fields( $fields ){
 			global $post;
 
-			if($this->get_option('show-visbility-settings') != '1'){
+			if( $this->get_option( 'show-visbility-settings' ) != '1' ){
 				return $fields;
 			}
 
 			// Get the visibility setting from the post if its been set
-			if($post){
-				$default_visibility = $this->get_post_visibility_setting($post->ID);
+			if( $post ){
+				$default_visibility = $this->get_post_visibility_setting( $post->ID );
 			}
 			else{
 				$default_visibility = null;
 			}
 
-			$fields['visibility'] = $this->get_field_html($default_visibility);
+			$fields['visibility'] = $this->get_field_html( $default_visibility );
 			return $fields;
 		}
 
@@ -629,12 +629,12 @@
 		 * @param type $post_id 
 		 * @return type
 		 */
-		function get_post_visibility_setting($post_id){
+		function get_post_visibility_setting( $post_id ){
 			// Let get_post_meta return an array because if the meta data doesn't exist it will return a blank string which will conflict with our null case
-			$meta_values = get_post_meta($post_id, self::FIELD_PREFIX . 'visibility');
+			$meta_values = get_post_meta( $post_id, self::FIELD_PREFIX . 'visibility' );
 
-			if(count($meta_values) > 0){
-				return current($meta_values);
+			if( count( $meta_values ) > 0 ){
+				return current( $meta_values );
 			}
 			return null;
 		}
@@ -647,16 +647,16 @@
 		 */
 		function set_comment_visibility( $comment_id, $visibility = null) {
 
-			if( is_null($visibility) ) {
+			if( is_null( $visibility ) ) {
 				// Get the visibility setting from the post if its been set
-				if($comment = get_comment($comment_id)){
-					$default_visibility = $this->get_post_visibility_setting($comment->comment_post_ID);
+				if( $comment = get_comment( $comment_id ) ){
+					$default_visibility = $this->get_post_visibility_setting( $comment->comment_post_ID );
 				}
 				else{
 					$default_visibility = null;
 				}
 
-				if( is_null($default_visibility) ){
+				if( is_null( $default_visibility ) ){
 					$default_visibility = $this->get_default_visiblity();
 				}
 
@@ -667,8 +667,8 @@
 			delete_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility' );
 
 			//Only save the meta data if it is not blank
-			if(!empty($visibility)){
-				add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($visibility) );
+			if( ! empty( $visibility ) ){
+				add_comment_meta( $comment_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field( $visibility ) );
 			}	
 		}
 
@@ -679,26 +679,26 @@
 		 */
 		function save_visibility_fields( $comment_id ) {
 			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
-			if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
+			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
 				return $comment_id;
 
 			// Check to see if the user was able to override the default setting
-			if($this->get_option('show-visbility-settings') == '1'){
+			if( $this->get_option( 'show-visbility-settings' ) == '1' ){
 				
 				// a nonce value is always required so verify it here
-				if(!$this->verify_nonce()){
+				if( ! $this->verify_nonce() ){
 					// There wasn't a valid nonce value so just use the default set by the administrator
-					$this->set_comment_visibility($comment_id);
+					$this->set_comment_visibility( $comment_id ) ;
 					return $comment_id;
 				}
 
 				// Use the value that was submitted by the user
-				$this->set_comment_visibility($comment_id, $_POST['visibility']);
+				$this->set_comment_visibility( $comment_id, $_POST['visibility'] );
 			}
 			else{
 
 				// Use the default set by the administrator
-				$this->set_comment_visibility($comment_id);						
+				$this->set_comment_visibility( $comment_id );						
 			}
 
 			return $comment_id;
@@ -711,22 +711,22 @@
 		 */
 		function save_visibility_fields_for_post( $post_id ){
 			// If this is an autosave, our form has not been submitted, so we don't want to do anything.
-			if( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) 
+			if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
 				return $post_id;
 
 			// a nonce value is always required so verify it here
-			if(!$this->verify_nonce()){
+			if( ! $this->verify_nonce() ) {
 				return $post_id;
 			}
 
 			// Check the user's permissions.
-			if('page' == $_POST['post_type']){
-				if(!current_user_can('edit_page', $post_id)){
+			if( 'page' == $_POST['post_type'] ){
+				if( ! current_user_can( 'edit_page', $post_id ) ){
 					return $post_id;
 				}
 			}
 			else {
-				if(!current_user_can('edit_post', $post_id)){
+				if( ! current_user_can( 'edit_post', $post_id ) ){
 					return $post_id;
 				}
 			}
@@ -735,8 +735,8 @@
 			delete_post_meta( $post_id, self::FIELD_PREFIX . 'visibility' );
 
 			//Only save the meta data if it is not set to "Blog Default"
-			if(isset($_POST['visibility']) && $_POST['visibility'] != '-1'){
-				add_post_meta( $post_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field($_POST['visibility']) );
+			if( isset( $_POST['visibility'] ) && $_POST['visibility'] != '-1' ){
+				add_post_meta( $post_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field( $_POST['visibility'] ) );
 			}
 		}
 	}
