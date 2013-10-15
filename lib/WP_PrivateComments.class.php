@@ -404,12 +404,12 @@
 			 * author. It assumes your not since you aren't logged in.
 			 */
 			$sql = $wpdb->prepare( "
-				select comment.comment_ID, meta.meta_value, post.post_author, comment.comment_author, comment.comment_author_email, comment.user_id, comment_parent.comment_author `parent_comment_author`, comment_parent.comment_author_email `parent_comment_author_email`, comment_parent.user_id `parent_comment_user_id`
-					from {$wpdb->comments} comment
-						inner join {$wpdb->commentmeta} meta on meta.comment_id = comment.comment_ID and meta.meta_key = %s
-						inner join {$wpdb->posts} post on post.ID = comment.comment_post_ID
-						left outer join {$wpdb->comments} comment_parent on comment_parent.comment_ID = comment.comment_parent
-				where comment.comment_ID in ({$comment_ids})", self::FIELD_PREFIX . 'visibility' );
+				SELECT comment.comment_ID, meta.meta_value, post.post_author, comment.comment_author, comment.comment_author_email, comment.user_id, comment_parent.comment_author `parent_comment_author`, comment_parent.comment_author_email `parent_comment_author_email`, comment_parent.user_id `parent_comment_user_id`
+					FROM {$wpdb->comments} comment
+						INNER JOIN {$wpdb->commentmeta} meta ON meta.comment_id = comment.comment_ID AND meta.meta_key = %s
+						INNER JOIN {$wpdb->posts} post ON post.ID = comment.comment_post_ID
+						LEFT OUTER JOIN {$wpdb->comments} comment_parent ON comment_parent.comment_ID = comment.comment_parent
+				WHERE comment.comment_ID IN ({$comment_ids})", self::FIELD_PREFIX . 'visibility' );
 			$comments_to_check = $wpdb->get_results( $sql );
 
 			$removed_comments = array();
