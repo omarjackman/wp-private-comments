@@ -9,11 +9,11 @@
 		protected $_comment_counts = array();
 
 
-		const OPTION_PREFIX = 'wp-private-comments-';
-		const FIELD_PREFIX =  'wp-private-comments-';
-		const VISIBILITY_EVERYONE = '';
-		const VISIBILITY_POST_AUTHOR = 1;
-		const VISIBILITY_COMMENT_AUTHOR = 2;
+		const OPTION_PREFIX 				= 'wp-private-comments-';
+		const FIELD_PREFIX 					=  'wp-private-comments-';
+		const VISIBILITY_EVERYONE 			= '';
+		const VISIBILITY_POST_AUTHOR 		= 1;
+		const VISIBILITY_COMMENT_AUTHOR 	= 2;
 
 		protected function __clone() {}
 
@@ -161,18 +161,34 @@
 
 
 			register_setting( 'wp-private-comments', 'wp-private-comments-visibility-default');
+
 			$default_visibility_settings = array(
-				array('type' => 'select', 'name' => 'wp-private-comments-visibility-default', 'values' => $this->get_visibility_values(), 'description' => 'Select the default visibility setting for comments on posts and replies to comments.<BR>Note: This can also be overriden for each post'),
+				array(
+					'type' => 'select', 
+					'name' => 'wp-private-comments-visibility-default', 
+					'values' => $this->get_visibility_values(), 
+					'description' => 'Select the default visibility setting for comments on posts and replies to comments.<BR>Note: This can also be overriden for each post',
+				),
 			);
 			add_settings_field( 'wp-private-comments-visibility-defaults', __('Visibility Default'), array($this, 'render_setting_fields'), 'wp-private-comments', 'wp-private-comments-settings-section', $default_visibility_settings);
 
 			
 			register_setting( 'wp-private-comments', 'wp-private-comments-show-visbility-settings', 'intval' );
 			register_setting( 'wp-private-comments', 'wp-private-comments-remove-comments', 'intval' );
+
 			$admin_default_settings = array(
-				array('type' => 'checkbox', 'name' => 'wp-private-comments-show-visbility-settings', 'default' => 'Show visibility settings to users'),
-				array('type' => 'checkbox', 'name' => 'wp-private-comments-remove-comments', 'default' => 'Remove hidden comments'),
-			);						
+				array(
+					'type' => 'checkbox', 
+					'name' => 'wp-private-comments-show-visbility-settings', 
+					'default' => 'Show visibility settings to users',
+				),
+				array(
+					'type' => 'checkbox', 
+					'name' => 'wp-private-comments-remove-comments', 
+					'default' => 'Remove hidden comments',
+				),
+			);		
+
 			add_settings_field( 'wp-private-comments-settings', __('Settings'), array($this, 'render_setting_fields'), 'wp-private-comments', 'wp-private-comments-settings-section', $admin_default_settings);
 
 		}
@@ -274,7 +290,10 @@
 		 * @return array
 		 */
 		function get_visibility_values_for_post($values){
-			return array_merge(array('-- Blog Default --' => -1), $values);
+			$extra_values = array(
+				'-- Blog Default --' => -1,
+			);
+			return array_merge($extra_values, $values);
 		}
 
 		/**
