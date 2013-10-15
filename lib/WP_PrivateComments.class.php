@@ -735,7 +735,7 @@
 			delete_post_meta( $post_id, self::FIELD_PREFIX . 'visibility' );
 
 			//Only save the meta data if it is not set to "Blog Default"
-			if ( isset( $_POST['visibility'] ) && '1' != $_POST['visibility'] ) {
+			if ( isset( $_POST['visibility'] ) && '-1' != $_POST['visibility'] ) {
 				add_post_meta( $post_id, self::FIELD_PREFIX . 'visibility', sanitize_text_field( $_POST['visibility'] ) );
 			}
 		}
