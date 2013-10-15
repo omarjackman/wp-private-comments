@@ -277,7 +277,7 @@
 			
 			$default_visibility = $this->get_post_visibility_setting( $post->ID );
 			
-			echo $this->get_field_html( is_null( $default_visibility)  ? "-1" : $default_visibility );
+			echo $this->get_field_html( is_null( $default_visibility ) ? "-1" : $default_visibility );
 			echo $this->get_nonce();
 
 			// remove the filter we added before since it was only for one time use above
